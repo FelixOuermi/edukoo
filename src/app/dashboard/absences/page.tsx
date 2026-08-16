@@ -91,7 +91,13 @@ export default async function AbsencesPage({
       </form>
 
       {classId ? (
-        <AbsencesForm classId={classId} date={selectedDate} schoolName={school.name} students={students} />
+        <AbsencesForm
+          key={students.map((s) => `${s.id}:${s.wasAbsent}:${s.wasJustified}`).join(',')}
+          classId={classId}
+          date={selectedDate}
+          schoolName={school.name}
+          students={students}
+        />
       ) : (
         <p className="text-sm text-gray-400">Créez d&apos;abord une classe.</p>
       )}

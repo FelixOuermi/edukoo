@@ -5,14 +5,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderBottom: '2 solid #7c3aed',
     paddingBottom: 16,
     marginBottom: 20,
   },
-  schoolName: { fontSize: 16, fontWeight: 700, color: '#4c1d95' },
+  headerLeft: { flexShrink: 1, flexGrow: 0, paddingRight: 10 },
+  headerRight: { flexShrink: 1, flexGrow: 0, alignItems: 'flex-end' },
+  schoolName: { fontSize: 15, fontWeight: 700, color: '#4c1d95' },
   schoolMeta: { fontSize: 9, color: '#6b7280', marginTop: 2 },
-  receiptTitle: { fontSize: 18, fontWeight: 700, color: '#7c3aed', textAlign: 'right' },
+  receiptTitle: { fontSize: 15, fontWeight: 700, color: '#7c3aed', textAlign: 'right' },
   receiptNumber: { fontSize: 10, color: '#6b7280', textAlign: 'right', marginTop: 2 },
   section: { marginBottom: 16 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
@@ -51,19 +53,28 @@ export interface ReceiptData {
   paidAt: string
 }
 
+// Intl.NumberFormat('fr-FR') groups with a narrow no-break space (U+202F),
+// which the PDF base-14 Helvetica font has no glyph for. Group manually
+// with a plain space instead.
+function formatFCFA(amount: number) {
+  return Math.round(amount)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
 export function ReceiptDocument({ data }: { data: ReceiptData }) {
-  const formattedAmount = new Intl.NumberFormat('fr-FR').format(Math.round(data.amount))
+  const formattedAmount = formatFCFA(data.amount)
 
   return (
     <Document>
       <Page size="A5" style={styles.page}>
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.schoolName}>{data.schoolName}</Text>
             {data.schoolAddress && <Text style={styles.schoolMeta}>{data.schoolAddress}</Text>}
             {data.schoolPhone && <Text style={styles.schoolMeta}>{data.schoolPhone}</Text>}
           </View>
-          <View>
+          <View style={styles.headerRight}>
             <Text style={styles.receiptTitle}>REÇU DE PAIEMENT</Text>
             <Text style={styles.receiptNumber}>{data.receiptNumber}</Text>
           </View>

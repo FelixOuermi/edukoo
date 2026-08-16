@@ -26,6 +26,12 @@ export default function RegisterPage() {
             Inscription de l&apos;école
           </h2>
 
+          {state?.pendingConfirmation ? (
+            <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+              Compte créé. Vérifiez votre boîte email pour confirmer votre adresse, puis
+              connectez-vous.
+            </p>
+          ) : (
           <form action={formAction} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -94,6 +100,7 @@ export default function RegisterPage() {
               {pending ? 'Création...' : 'Créer mon école — Essai gratuit 30 jours'}
             </button>
           </form>
+          )}
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Déjà un compte ?{' '}

@@ -50,9 +50,9 @@ export default async function ScolaritePage({
     const paid = paidByStudent.get(s.id) ?? 0
     const due = Math.max(expected - paid, 0)
     let rowStatus: Statut = 'impaye'
-    if (expected > 0 && paid >= expected) rowStatus = 'paye'
+    if (expected === 0) rowStatus = 'paye'
+    else if (paid >= expected) rowStatus = 'paye'
     else if (paid > 0) rowStatus = 'partiel'
-    else if (expected === 0) rowStatus = 'paye'
     return {
       id: s.id,
       name: `${s.first_name} ${s.last_name}`,
@@ -158,7 +158,9 @@ export default async function ScolaritePage({
                 <td className="px-4 py-3 text-gray-600">{r.className}</td>
                 <td className="px-4 py-3 text-right text-gray-600">{formatFCFA(r.expected)}</td>
                 <td className="px-4 py-3 text-right text-gray-600">{formatFCFA(r.paid)}</td>
-                <td className="px-4 py-3 text-right font-medium text-amber-600">{formatFCFA(r.due)}</td>
+                <td className={`px-4 py-3 text-right font-medium ${r.due > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  {formatFCFA(r.due)}
+                </td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[r.status]}`}>
                     {statusLabel[r.status]}

@@ -9,30 +9,24 @@ export async function signUp(_prevState: unknown, formData: FormData) {
   const schoolName = formData.get('schoolName') as string
   const directorName = formData.get('directorName') as string
 
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { school_name: schoolName, director_name: directorName },
+    },
+  })
   if (error) return { error: error.message }
 
-  if (data.user) {
-    const { data: school, error: schoolError } = await supabase
-      .from('schools')
-      .insert({
-        name: schoolName,
-        director_name: directorName,
-        email: email,
-        plan: 'starter',
-      })
-      .select()
-      .single()
-
-    if (schoolError) return { error: schoolError.message }
-
-    await supabase.from('teachers').insert({
-      school_id: school.id,
-      user_id: data.user.id,
-      name: directorName,
-      email: email,
-    })
+  // The `handle_new_school_signup` DB trigger provisions the school and
+  // teacher rows from the metadata above, even before email confirmation.
+  if (!data.session) {
+    return {
+      success: true,
+      pendingConfirmation: true,
+    }
   }
+
   redirect('/dashboard')
 }
 

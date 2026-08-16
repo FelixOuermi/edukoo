@@ -11,6 +11,8 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     marginBottom: 16,
   },
+  headerLeft: { flexShrink: 1, flexGrow: 0, paddingRight: 10 },
+  headerRight: { flexShrink: 1, flexGrow: 0, alignItems: 'flex-end' },
   schoolName: { fontSize: 15, fontWeight: 700, color: '#4c1d95' },
   schoolMeta: { fontSize: 8, color: '#6b7280', marginTop: 2 },
   bulletinTitle: { fontSize: 14, fontWeight: 700, color: '#7c3aed', textAlign: 'right' },
@@ -79,11 +81,11 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
   return (
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.schoolName}>{schoolName}</Text>
             {schoolAddress && <Text style={styles.schoolMeta}>{schoolAddress}</Text>}
           </View>
-          <View>
+          <View style={styles.headerRight}>
             <Text style={styles.bulletinTitle}>BULLETIN DE NOTES</Text>
             <Text style={styles.bulletinMeta}>
               Trimestre {trimester} — Année {schoolYearName}

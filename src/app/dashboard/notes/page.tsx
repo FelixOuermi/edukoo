@@ -92,7 +92,13 @@ export default async function NotesPage({
           Aucune année scolaire active. Configurez-la dans Paramètres avant de saisir des notes.
         </p>
       ) : classId && subjectId ? (
-        <GradesForm classId={classId} subjectId={subjectId} trimester={trimester} students={students} />
+        <GradesForm
+          key={students.map((s) => `${s.id}:${s.score}`).join(',')}
+          classId={classId}
+          subjectId={subjectId}
+          trimester={trimester}
+          students={students}
+        />
       ) : (
         <p className="text-sm text-gray-400">Créez d&apos;abord une classe et une matière.</p>
       )}

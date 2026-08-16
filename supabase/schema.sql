@@ -158,6 +158,42 @@ CREATE TABLE absences (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Provisionnement automatique école + enseignant à l'inscription
+-- (SECURITY DEFINER : contourne la RLS, s'exécute même sans session
+-- active, ce qui est nécessaire quand la confirmation d'email est activée)
+CREATE OR REPLACE FUNCTION handle_new_school_signup()
+RETURNS TRIGGER AS $$
+DECLARE
+  new_school_id UUID;
+BEGIN
+  IF NEW.raw_user_meta_data ? 'school_name' THEN
+    INSERT INTO schools (name, director_name, email, plan)
+    VALUES (
+      NEW.raw_user_meta_data->>'school_name',
+      NEW.raw_user_meta_data->>'director_name',
+      NEW.email,
+      'starter'
+    )
+    RETURNING id INTO new_school_id;
+
+    INSERT INTO teachers (school_id, user_id, name, email)
+    VALUES (
+      new_school_id,
+      NEW.id,
+      NEW.raw_user_meta_data->>'director_name',
+      NEW.email
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_school_signup();
+
 -- Numérotation reçus
 CREATE SEQUENCE IF NOT EXISTS receipt_number_seq
   START 1000;
