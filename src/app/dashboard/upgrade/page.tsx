@@ -1,9 +1,8 @@
 import { Check, MessageCircle } from 'lucide-react'
 import { getCurrentSchool } from '@/lib/school'
 
-// TODO: remplacer par le vrai numéro Orange Money / WhatsApp d'Edukoo.
-const EDUKOO_PAYMENT_PHONE_DISPLAY = '+226 XX XX XX XX'
-const EDUKOO_WHATSAPP_NUMBER = '226XXXXXXXX'
+const EDUKOO_PAYMENT_PHONE_DISPLAY = '+226 64 55 77 30'
+const EDUKOO_WHATSAPP_NUMBER = '22664557730'
 
 const PLANS = [
   {
