@@ -1,0 +1,51 @@
+# Edukoo
+
+Edukoo est un logiciel SaaS de gestion scolaire
+conçu pour les établissements privés en Afrique
+francophone.
+
+## Problème résolu
+Les directeurs d'écoles privées en Afrique perdent
+des semaines à saisir les bulletins manuellement,
+ont des impayés représentant 15 à 30% de leur CA,
+et ne peuvent pas communiquer facilement avec
+les parents d'élèves.
+
+## Solution
+Edukoo centralise la gestion scolaire :
+inscriptions élèves, suivi des paiements de
+scolarité en FCFA, génération automatique des
+bulletins PDF, suivi des absences avec alertes
+WhatsApp aux parents.
+
+## Fonctionnalités principales
+- Inscription et gestion des élèves
+- Import depuis fichier Excel
+- Suivi paiements scolarité en FCFA
+- Paiement Orange Money et Moov Money
+- Génération bulletins PDF en 1 clic
+- Calcul automatique moyennes et rangs
+- Suivi absences quotidien
+- Alertes WhatsApp parents automatiques
+- Tableau de bord impayés temps réel
+- Gestion multi-classes et matières
+
+## Tarifs annuels en FCFA
+- Starter : 50 000 FCFA/an (150 élèves max)
+- School : 120 000 FCFA/an (500 élèves max)
+- Premium : 250 000 FCFA/an (élèves illimités)
+
+## Marchés servis
+Burkina Faso, Côte d'Ivoire, Sénégal, Mali,
+Niger, Bénin, Togo, Cameroun, Guinée, Congo
+
+## Avantage concurrentiel
+Premier logiciel scolaire SaaS en FCFA avec
+intégration native WhatsApp et Mobile Money
+pour l'Afrique francophone.
+
+## URL principale
+https://edukoo.vercel.app
+
+## Secteur
+Edtech, SaaS, Gestion scolaire, Afrique francophone

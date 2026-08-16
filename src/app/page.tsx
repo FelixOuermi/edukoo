@@ -6,6 +6,7 @@ import {
   MessageCircle,
   Smartphone,
   Check,
+  Quote,
 } from 'lucide-react'
 
 const ADVANTAGES = [
@@ -39,6 +40,29 @@ const PLANS = [
     detail: 'Élèves illimités',
     features: ['Tout School', 'Multi-établissements', 'Statistiques avancées', 'Support dédié'],
     highlighted: false,
+  },
+]
+
+const TESTIMONIALS = [
+  {
+    quote:
+      'Avant Edukoo, je passais 3 semaines à préparer les bulletins. Maintenant c\'est 1 journée pour 400 élèves.',
+    name: 'Madame Kaboré',
+    role: 'Directrice',
+    school: 'Lycée Privé Excellence, Ouagadougou',
+  },
+  {
+    quote:
+      'Le suivi des impayés a changé notre école. Nous avons récupéré 2 mois de retards en 3 semaines grâce aux alertes.',
+    name: 'Monsieur Traoré',
+    role: 'Directeur',
+    school: 'Collège Privé Horizon, Bobo-Dioulasso',
+  },
+  {
+    quote: "L'import Excel de nos 650 étudiants s'est fait en 10 minutes. Incroyable.",
+    name: 'Madame Sawadogo',
+    role: 'Secrétaire générale',
+    school: 'Institut Supérieur Privé de Gestion',
   },
 ]
 
@@ -152,6 +176,41 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="py-16 px-6 bg-violet-50">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-gray-900">Pour tous vos établissements</h2>
+          <p className="text-lg text-gray-600 mt-5 leading-relaxed">
+            Edukoo s&apos;adapte à tous les types d&apos;établissements privés : écoles primaires,
+            collèges, lycées, universités et instituts de formation professionnelle au Burkina
+            Faso et dans toute l&apos;Afrique francophone. Que vous gériez 50 ou 2000 élèves,
+            Edukoo centralise votre gestion scolaire en FCFA avec les outils que vous utilisez
+            déjà : WhatsApp, Orange Money et Moov Money.
+          </p>
+        </div>
+      </section>
+
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+            Ils font confiance à Edukoo
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-7">
+                <Quote className="w-7 h-7 text-[#7c3aed] mb-4" />
+                <p className="text-gray-700 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <p className="font-semibold text-gray-900">{t.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {t.role}, {t.school}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-gray-100 py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -160,6 +219,9 @@ export default function LandingPage() {
             </div>
             <span className="font-semibold text-gray-800">Edukoo</span>
           </div>
+          <Link href="/faq" className="text-sm text-gray-500 hover:text-[#7c3aed] font-medium">
+            FAQ
+          </Link>
           <p className="text-sm text-gray-400">© Edukoo 2026 — Gestion scolaire Afrique francophone</p>
         </div>
       </footer>
