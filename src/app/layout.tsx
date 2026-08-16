@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SchoolPro — Gestion scolaire Afrique francophone",
+  title: "Edukoo — Gestion scolaire Afrique francophone",
   description: "Gérez votre école. Libérez votre temps.",
 };
 

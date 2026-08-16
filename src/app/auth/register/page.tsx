@@ -15,7 +15,7 @@ export default function RegisterPage() {
           <div className="w-16 h-16 rounded-2xl bg-[#7c3aed] flex items-center justify-center mb-4 shadow-lg shadow-violet-300">
             <GraduationCap className="w-9 h-9 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">SchoolPro</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Edukoo</h1>
           <p className="text-gray-500 mt-2 text-center">
             Créez votre espace école en 2 minutes
           </p>

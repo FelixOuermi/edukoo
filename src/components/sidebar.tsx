@@ -48,7 +48,7 @@ export function Sidebar({ schoolName }: { schoolName: string }) {
         <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
           <GraduationCap className="w-5 h-5 text-white" />
         </div>
-        <span className="font-bold text-lg text-white">SchoolPro</span>
+        <span className="font-bold text-lg text-white">Edukoo</span>
       </div>
 
       <div className="px-6 py-3 text-xs text-violet-300 truncate border-b border-violet-800/40">

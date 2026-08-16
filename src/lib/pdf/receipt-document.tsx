@@ -111,7 +111,7 @@ export function ReceiptDocument({ data }: { data: ReceiptData }) {
         </View>
 
         <View style={styles.footer}>
-          <Text>Reçu généré par SchoolPro — merci de conserver ce document.</Text>
+          <Text>Reçu généré par Edukoo — merci de conserver ce document.</Text>
         </View>
       </Page>
     </Document>

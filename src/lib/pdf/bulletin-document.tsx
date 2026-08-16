@@ -150,7 +150,7 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
         </View>
 
         <View style={styles.footer}>
-          <Text>Bulletin généré par SchoolPro</Text>
+          <Text>Bulletin généré par Edukoo</Text>
         </View>
       </Page>
   )

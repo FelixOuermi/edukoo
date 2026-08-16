@@ -51,7 +51,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-[#7c3aed] flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-lg text-gray-900">SchoolPro</span>
+            <span className="font-bold text-lg text-gray-900">Edukoo</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
@@ -158,9 +158,9 @@ export default function LandingPage() {
             <div className="w-6 h-6 rounded-md bg-[#7c3aed] flex items-center justify-center">
               <GraduationCap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-800">SchoolPro</span>
+            <span className="font-semibold text-gray-800">Edukoo</span>
           </div>
-          <p className="text-sm text-gray-400">© SchoolPro 2026 — Gestion scolaire Afrique francophone</p>
+          <p className="text-sm text-gray-400">© Edukoo 2026 — Gestion scolaire Afrique francophone</p>
         </div>
       </footer>
     </div>
