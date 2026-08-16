@@ -6,9 +6,10 @@ CREATE TABLE schools (
   phone TEXT,
   email TEXT,
   logo_url TEXT,
-  plan TEXT DEFAULT 'starter'
-    CHECK (plan IN ('starter','school','premium')),
+  plan TEXT DEFAULT 'trial'
+    CHECK (plan IN ('trial','starter','school','premium')),
   plan_expires_at TIMESTAMPTZ,
+  trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days'),
   director_name TEXT,
   nif TEXT,
   orange_money TEXT,
@@ -172,7 +173,7 @@ BEGIN
       NEW.raw_user_meta_data->>'school_name',
       NEW.raw_user_meta_data->>'director_name',
       NEW.email,
-      'starter'
+      'trial'
     )
     RETURNING id INTO new_school_id;
 

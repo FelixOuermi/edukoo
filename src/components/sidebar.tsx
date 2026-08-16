@@ -12,6 +12,7 @@ import {
   Users,
   Settings,
   LogOut,
+  Star,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 
@@ -75,7 +76,21 @@ export function Sidebar({ schoolName }: { schoolName: string }) {
         })}
       </nav>
 
-      <form action={signOut} className="px-3 py-4 border-t border-violet-800/60">
+      <div className="px-3 pt-4 border-t border-violet-800/60">
+        <Link
+          href="/dashboard/upgrade"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            isActive(pathname, '/dashboard/upgrade')
+              ? 'bg-amber-400/15 text-amber-300'
+              : 'text-amber-400 hover:bg-amber-400/10'
+          }`}
+        >
+          <Star className="w-[18px] h-[18px]" />
+          Passer au plan payant
+        </Link>
+      </div>
+
+      <form action={signOut} className="px-3 py-4">
         <button
           type="submit"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-violet-200 hover:bg-white/10 hover:text-white w-full transition-colors"
