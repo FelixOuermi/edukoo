@@ -35,6 +35,7 @@ export async function GET(
         schoolName: school.name,
         schoolAddress: school.address,
         schoolPhone: school.phone,
+        schoolLogoUrl: school.logo_url,
         receiptNumber: payment.receipt_number ?? '—',
         studentName: student ? `${student.first_name} ${student.last_name}` : '—',
         className: student?.classes?.name,

@@ -2,7 +2,53 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { requireDirector } from '@/lib/school'
+
+const ALLOWED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+const MAX_LOGO_SIZE = 2 * 1024 * 1024
+
+export async function uploadSchoolLogo(_prevState: unknown, formData: FormData) {
+  const { school } = await requireDirector()
+  const supabase = await createClient()
+  const file = formData.get('file') as File | null
+
+  if (!file || file.size === 0) return { error: 'Aucun fichier fourni.' }
+  if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+    return { error: 'Format non supporté. Utilise PNG, JPEG, WebP ou SVG.' }
+  }
+  if (file.size > MAX_LOGO_SIZE) {
+    return { error: 'Le fichier dépasse 2 Mo.' }
+  }
+
+  const admin = createAdminClient()
+  const extension = file.name.split('.').pop() || 'png'
+  const path = `${school.id}/logo-${Date.now()}.${extension}`
+
+  const { error: uploadError } = await admin.storage.from('school-logos').upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const {
+    data: { publicUrl },
+  } = admin.storage.from('school-logos').getPublicUrl(path)
+
+  const previousLogoUrl = school.logo_url as string | null
+  const { error: updateError } = await supabase.from('schools').update({ logo_url: publicUrl }).eq('id', school.id)
+
+  if (updateError) return { error: updateError.message }
+
+  if (previousLogoUrl?.includes('/school-logos/')) {
+    const previousPath = previousLogoUrl.split('/school-logos/')[1]
+    if (previousPath) await admin.storage.from('school-logos').remove([previousPath])
+  }
+
+  revalidatePath('/dashboard/parametres')
+  return { success: true, logoUrl: publicUrl }
+}
 
 export async function updateSchoolInfo(_prevState: unknown, formData: FormData) {
   const { school } = await requireDirector()

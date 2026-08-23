@@ -1,7 +1,7 @@
 'use client'
 
-import { useActionState, useTransition } from 'react'
-import { updateSchoolInfo, createSchoolYear, upsertFeeStructure, setCurrentSchoolYear } from './actions'
+import { useActionState, useRef, useState, useTransition } from 'react'
+import { updateSchoolInfo, createSchoolYear, upsertFeeStructure, setCurrentSchoolYear, uploadSchoolLogo } from './actions'
 
 interface School {
   name: string
@@ -207,5 +207,50 @@ export function FeeStructureForm({ classes }: { classes: { id: string; name: str
         {pending ? 'Enregistrement...' : 'Enregistrer la grille'}
       </button>
     </form>
+  )
+}
+
+const initialLogoState: { error?: string; success?: boolean; logoUrl?: string } = {}
+
+export function LogoUploadForm({ currentLogoUrl }: { currentLogoUrl: string | null }) {
+  const formRef = useRef<HTMLFormElement>(null)
+  const [preview, setPreview] = useState<string | null>(currentLogoUrl)
+  const [state, formAction, pending] = useActionState(async (_prev: typeof initialLogoState, formData: FormData) => {
+    const result = await uploadSchoolLogo(_prev, formData)
+    if (result?.logoUrl) setPreview(result.logoUrl)
+    formRef.current?.reset()
+    return result
+  }, initialLogoState)
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+      <h2 className="font-semibold text-gray-900">Logo de l&apos;école</h2>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="Logo de l'école" className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-[10px] text-gray-400 text-center px-1">Aucun logo</span>
+          )}
+        </div>
+        <form ref={formRef} action={formAction} className="flex-1 space-y-2">
+          <label className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg cursor-pointer text-gray-700">
+            {pending ? 'Envoi...' : 'Choisir une image'}
+            <input
+              type="file"
+              name="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="hidden"
+              disabled={pending}
+              onChange={(e) => e.target.files?.length && e.target.form?.requestSubmit()}
+            />
+          </label>
+          <p className="text-[11px] text-gray-400">PNG, JPEG, WebP ou SVG — 2 Mo maximum. Utilisé sur les bulletins et reçus PDF.</p>
+          {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
+          {state?.success && <p className="text-xs text-emerald-600">Logo mis à jour.</p>}
+        </form>
+      </div>
+    </div>
   )
 }

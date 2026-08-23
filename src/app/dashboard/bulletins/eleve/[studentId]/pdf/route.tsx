@@ -48,6 +48,7 @@ export async function GET(
       data={{
         schoolName: school.name,
         schoolAddress: school.address,
+        schoolLogoUrl: school.logo_url,
         schoolYearName: schoolYear.name,
         trimester,
         bulletin,

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
-import { SchoolInfoForm, SchoolYearForm, FeeStructureForm, ActivateSchoolYearButton } from './settings-forms'
+import { SchoolInfoForm, SchoolYearForm, FeeStructureForm, ActivateSchoolYearButton, LogoUploadForm } from './settings-forms'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -27,6 +27,8 @@ export default async function ParametresPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
+
+      <LogoUploadForm currentLogoUrl={school.logo_url} />
 
       <SchoolInfoForm school={school} />
 

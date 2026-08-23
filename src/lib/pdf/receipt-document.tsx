@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 11, fontFamily: 'Helvetica', color: '#1f2937' },
@@ -10,7 +10,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     marginBottom: 20,
   },
-  headerLeft: { flexShrink: 1, flexGrow: 0, paddingRight: 10 },
+  headerLeft: { flexShrink: 1, flexGrow: 0, paddingRight: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logo: { width: 32, height: 32, objectFit: 'contain' },
   headerRight: { flexShrink: 1, flexGrow: 0, alignItems: 'flex-end' },
   schoolName: { fontSize: 15, fontWeight: 700, color: '#4c1d95' },
   schoolMeta: { fontSize: 9, color: '#6b7280', marginTop: 2 },
@@ -44,6 +45,7 @@ export interface ReceiptData {
   schoolName: string
   schoolAddress?: string | null
   schoolPhone?: string | null
+  schoolLogoUrl?: string | null
   receiptNumber: string
   studentName: string
   className?: string | null
@@ -70,9 +72,12 @@ export function ReceiptDocument({ data }: { data: ReceiptData }) {
       <Page size="A5" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.schoolName}>{data.schoolName}</Text>
-            {data.schoolAddress && <Text style={styles.schoolMeta}>{data.schoolAddress}</Text>}
-            {data.schoolPhone && <Text style={styles.schoolMeta}>{data.schoolPhone}</Text>}
+            {data.schoolLogoUrl && <Image src={data.schoolLogoUrl} style={styles.logo} />}
+            <View>
+              <Text style={styles.schoolName}>{data.schoolName}</Text>
+              {data.schoolAddress && <Text style={styles.schoolMeta}>{data.schoolAddress}</Text>}
+              {data.schoolPhone && <Text style={styles.schoolMeta}>{data.schoolPhone}</Text>}
+            </View>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.receiptTitle}>REÇU DE PAIEMENT</Text>

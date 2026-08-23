@@ -32,6 +32,7 @@ export async function GET(
   const data: BulletinPdfData[] = bulletins.map((bulletin) => ({
     schoolName: school.name,
     schoolAddress: school.address,
+    schoolLogoUrl: school.logo_url,
     schoolYearName: schoolYear.name,
     trimester,
     bulletin,

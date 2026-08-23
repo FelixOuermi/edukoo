@@ -327,6 +327,18 @@ AS $$
   SELECT role FROM teachers WHERE user_id = auth.uid() AND is_active = true LIMIT 1;
 $$;
 
+-- Résout la ligne teachers.id du compte connecté. Utilisée par la RLS de
+-- `grades` pour vérifier l'affectation via teacher_subjects (voir plus bas).
+CREATE OR REPLACE FUNCTION current_teacher_id()
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT id FROM teachers WHERE user_id = auth.uid() AND is_active = true LIMIT 1;
+$$;
+
 -- La RLS de `teachers` n'isole qu'au niveau école : sans ce garde-fou, un
 -- compte enseignant pourrait s'auto-promouvoir directeur (ou réactiver un
 -- collègue désactivé) via un appel REST direct qui contourne les Server
@@ -382,10 +394,56 @@ CREATE POLICY "School isolation: fee_payments"
   ON fee_payments FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
-CREATE POLICY "School isolation: grades"
-  ON grades FOR ALL TO authenticated
+-- La lecture des notes reste scopée uniquement à l'école (un enseignant
+-- peut consulter le dossier complet d'un élève). L'écriture est en plus
+-- restreinte à l'affectation de l'enseignant via teacher_subjects — le
+-- directeur n'est jamais concerné par cette restriction supplémentaire.
+CREATE POLICY "School isolation: grades select"
+  ON grades FOR SELECT TO authenticated
+  USING (school_id = current_school_id());
+CREATE POLICY "School isolation: grades insert"
+  ON grades FOR INSERT TO authenticated
+  WITH CHECK (
+    school_id = current_school_id()
+    AND (
+      current_teacher_role() = 'director'
+      OR EXISTS (
+        SELECT 1 FROM teacher_subjects ts
+        WHERE ts.teacher_id = current_teacher_id()
+          AND ts.class_id = grades.class_id
+          AND ts.subject_id = grades.subject_id
+      )
+    )
+  );
+CREATE POLICY "School isolation: grades update"
+  ON grades FOR UPDATE TO authenticated
   USING (school_id = current_school_id())
-  WITH CHECK (school_id = current_school_id());
+  WITH CHECK (
+    school_id = current_school_id()
+    AND (
+      current_teacher_role() = 'director'
+      OR EXISTS (
+        SELECT 1 FROM teacher_subjects ts
+        WHERE ts.teacher_id = current_teacher_id()
+          AND ts.class_id = grades.class_id
+          AND ts.subject_id = grades.subject_id
+      )
+    )
+  );
+CREATE POLICY "School isolation: grades delete"
+  ON grades FOR DELETE TO authenticated
+  USING (
+    school_id = current_school_id()
+    AND (
+      current_teacher_role() = 'director'
+      OR EXISTS (
+        SELECT 1 FROM teacher_subjects ts
+        WHERE ts.teacher_id = current_teacher_id()
+          AND ts.class_id = grades.class_id
+          AND ts.subject_id = grades.subject_id
+      )
+    )
+  );
 CREATE POLICY "School isolation: grade_types"
   ON grade_types FOR ALL TO authenticated
   USING (school_id = current_school_id())
