@@ -19,7 +19,17 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
     return { error: 'Classe, matière et trimestre sont requis.' }
   }
 
+  const [{ data: klass }, { data: subject }, { data: validStudents }] = await Promise.all([
+    supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('subjects').select('id').eq('id', subjectId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('students').select('id').eq('class_id', classId).eq('school_id', school.id),
+  ])
+
+  if (!klass || !subject) return { error: 'Classe ou matière introuvable.' }
+
+  const validStudentIds = new Set((validStudents ?? []).map((s) => s.id))
   const rows = studentIds
+    .filter((studentId) => validStudentIds.has(studentId))
     .map((studentId) => {
       const raw = formData.get(`score_${studentId}`) as string
       if (raw === null || raw === '') return null

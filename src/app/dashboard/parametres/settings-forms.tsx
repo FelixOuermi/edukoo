@@ -1,7 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
-import { updateSchoolInfo, createSchoolYear, upsertFeeStructure } from './actions'
+import { useActionState, useTransition } from 'react'
+import { updateSchoolInfo, createSchoolYear, upsertFeeStructure, setCurrentSchoolYear } from './actions'
 
 interface School {
   name: string
@@ -106,6 +106,21 @@ export function SchoolInfoForm({ school }: { school: School }) {
         {pending ? 'Enregistrement...' : 'Enregistrer'}
       </button>
     </form>
+  )
+}
+
+export function ActivateSchoolYearButton({ id }: { id: string }) {
+  const [pending, startTransition] = useTransition()
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => startTransition(async () => { await setCurrentSchoolYear(id) })}
+      className="text-xs font-medium text-[#7c3aed] hover:underline disabled:opacity-50"
+    >
+      {pending ? 'Activation...' : 'Activer'}
+    </button>
   )
 }
 

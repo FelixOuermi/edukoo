@@ -230,23 +230,56 @@ ALTER TABLE fee_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absences ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Auth access schools"
-  ON schools FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access school_years"
-  ON school_years FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access classes"
-  ON classes FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access subjects"
-  ON subjects FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access teachers"
-  ON teachers FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access students"
-  ON students FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access fee_structures"
-  ON fee_structures FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access fee_payments"
-  ON fee_payments FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access grades"
-  ON grades FOR ALL TO authenticated USING (true);
-CREATE POLICY "Auth access absences"
-  ON absences FOR ALL TO authenticated USING (true);
+-- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
+-- la RLS de `teachers` en interne, donc pas de récursion avec la policy
+-- de `teachers` elle-même définie plus bas.
+CREATE OR REPLACE FUNCTION current_school_id()
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT school_id FROM teachers WHERE user_id = auth.uid() LIMIT 1;
+$$;
+
+CREATE POLICY "School isolation: schools"
+  ON schools FOR ALL TO authenticated
+  USING (id = current_school_id())
+  WITH CHECK (id = current_school_id());
+CREATE POLICY "School isolation: school_years"
+  ON school_years FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: classes"
+  ON classes FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: subjects"
+  ON subjects FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: teachers"
+  ON teachers FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: students"
+  ON students FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: fee_structures"
+  ON fee_structures FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: fee_payments"
+  ON fee_payments FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: grades"
+  ON grades FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: absences"
+  ON absences FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());

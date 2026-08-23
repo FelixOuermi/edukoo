@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
-import { SchoolInfoForm, SchoolYearForm, FeeStructureForm } from './settings-forms'
+import { SchoolInfoForm, SchoolYearForm, FeeStructureForm, ActivateSchoolYearButton } from './settings-forms'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -43,7 +43,7 @@ export default async function ParametresPage() {
                       Active
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-400">Inactive</span>
+                    <ActivateSchoolYearButton id={y.id} />
                   )}
                 </li>
               ))}

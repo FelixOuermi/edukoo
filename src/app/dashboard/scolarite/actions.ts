@@ -23,7 +23,9 @@ export async function recordPayment(_prevState: unknown, formData: FormData) {
     .select('class_id')
     .eq('id', studentId)
     .eq('school_id', school.id)
-    .single()
+    .maybeSingle()
+
+  if (!student) return { error: 'Élève introuvable.' }
 
   let feeStructureId: string | null = null
   if (student?.class_id && schoolYear) {

@@ -59,7 +59,11 @@ export async function setCurrentSchoolYear(id: string) {
   const supabase = await createClient()
 
   await supabase.from('school_years').update({ is_current: false }).eq('school_id', school.id)
-  const { error } = await supabase.from('school_years').update({ is_current: true }).eq('id', id)
+  const { error } = await supabase
+    .from('school_years')
+    .update({ is_current: true })
+    .eq('id', id)
+    .eq('school_id', school.id)
 
   if (error) return { error: error.message }
 
@@ -78,6 +82,15 @@ export async function upsertFeeStructure(_prevState: unknown, formData: FormData
   const installments = Number(formData.get('installments') || 3)
 
   if (!classId || !totalAmount) return { error: 'Classe et montant sont requis.' }
+
+  const { data: klass } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('id', classId)
+    .eq('school_id', school.id)
+    .maybeSingle()
+
+  if (!klass) return { error: 'Classe introuvable.' }
 
   const { data: existing } = await supabase
     .from('fee_structures')

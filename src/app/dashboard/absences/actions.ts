@@ -14,6 +14,14 @@ export async function saveAbsences(_prevState: unknown, formData: FormData) {
 
   if (!classId || !date) return { error: 'Classe et date sont requises.' }
 
+  const [{ data: klass }, { data: validStudents }] = await Promise.all([
+    supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('students').select('id').eq('class_id', classId).eq('school_id', school.id),
+  ])
+
+  if (!klass) return { error: 'Classe introuvable.' }
+  const validStudentIds = new Set((validStudents ?? []).map((s) => s.id))
+
   await supabase
     .from('absences')
     .delete()
@@ -22,7 +30,7 @@ export async function saveAbsences(_prevState: unknown, formData: FormData) {
     .eq('absence_date', date)
 
   const rows = studentIds
-    .filter((id) => formData.get(`absent_${id}`) === 'on')
+    .filter((id) => validStudentIds.has(id) && formData.get(`absent_${id}`) === 'on')
     .map((id) => ({
       school_id: school.id,
       student_id: id,

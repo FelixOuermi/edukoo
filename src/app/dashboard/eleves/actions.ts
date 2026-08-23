@@ -43,6 +43,7 @@ export async function createStudent(_prevState: unknown, formData: FormData) {
 }
 
 export async function updateStudent(id: string, formData: FormData) {
+  const { school } = await getCurrentSchool()
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -59,6 +60,7 @@ export async function updateStudent(id: string, formData: FormData) {
       status: (formData.get('status') as string) || 'active',
     })
     .eq('id', id)
+    .eq('school_id', school.id)
 
   if (error) return { error: error.message }
 
@@ -68,8 +70,9 @@ export async function updateStudent(id: string, formData: FormData) {
 }
 
 export async function deleteStudent(id: string) {
+  const { school } = await getCurrentSchool()
   const supabase = await createClient()
-  const { error } = await supabase.from('students').delete().eq('id', id)
+  const { error } = await supabase.from('students').delete().eq('id', id).eq('school_id', school.id)
   if (error) return { error: error.message }
   revalidatePath('/dashboard/eleves')
   redirect('/dashboard/eleves')

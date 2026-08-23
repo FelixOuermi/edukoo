@@ -39,25 +39,33 @@ export async function computeClassBulletins({
 }): Promise<{ className: string; bulletins: StudentBulletin[] }> {
   const supabase = await createClient()
 
-  const [{ data: klass }, { data: students }, { data: subjects }, { data: grades }] =
-    await Promise.all([
-      supabase.from('classes').select('name').eq('id', classId).single(),
-      supabase
-        .from('students')
-        .select('id, first_name, last_name')
-        .eq('class_id', classId)
-        .eq('status', 'active')
-        .order('last_name'),
-      supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
-      supabase
-        .from('grades')
-        .select('student_id, subject_id, score')
-        .eq('class_id', classId)
-        .eq('school_year_id', schoolYearId)
-        .eq('trimester', trimester),
-    ])
+  const { data: klass } = await supabase
+    .from('classes')
+    .select('name')
+    .eq('id', classId)
+    .eq('school_id', schoolId)
+    .maybeSingle()
 
-  const className = klass?.name ?? '—'
+  if (!klass) return { className: '—', bulletins: [] }
+
+  const [{ data: students }, { data: subjects }, { data: grades }] = await Promise.all([
+    supabase
+      .from('students')
+      .select('id, first_name, last_name')
+      .eq('class_id', classId)
+      .eq('school_id', schoolId)
+      .eq('status', 'active')
+      .order('last_name'),
+    supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
+    supabase
+      .from('grades')
+      .select('student_id, subject_id, score')
+      .eq('class_id', classId)
+      .eq('school_year_id', schoolYearId)
+      .eq('trimester', trimester),
+  ])
+
+  const className = klass.name
   const gradeMap = new Map<string, number>()
   for (const g of grades ?? []) {
     gradeMap.set(`${g.student_id}:${g.subject_id}`, Number(g.score))

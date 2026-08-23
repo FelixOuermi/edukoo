@@ -37,7 +37,10 @@ export default async function ElevesPage({
 
   if (classe) query = query.eq('class_id', classe)
   if (statut) query = query.eq('status', statut)
-  if (q) query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
+  if (q) {
+    const safeQ = q.replace(/[%,()]/g, '')
+    query = query.or(`first_name.ilike.%${safeQ}%,last_name.ilike.%${safeQ}%`)
+  }
 
   const { data: students } = await query
 
