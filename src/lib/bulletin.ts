@@ -48,7 +48,7 @@ export async function computeClassBulletins({
 
   if (!klass) return { className: '—', bulletins: [] }
 
-  const [{ data: students }, { data: subjects }, { data: grades }] = await Promise.all([
+  const [{ data: students }, { data: subjects }, { data: gradeTypes }, { data: grades }] = await Promise.all([
     supabase
       .from('students')
       .select('id, first_name, last_name')
@@ -57,23 +57,40 @@ export async function computeClassBulletins({
       .eq('status', 'active')
       .order('last_name'),
     supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
+    supabase.from('grade_types').select('id, weight').eq('school_id', schoolId),
     supabase
       .from('grades')
-      .select('student_id, subject_id, score')
+      .select('student_id, subject_id, grade_type_id, score')
       .eq('class_id', classId)
       .eq('school_year_id', schoolYearId)
       .eq('trimester', trimester),
   ])
 
   const className = klass.name
-  const gradeMap = new Map<string, number>()
+  const weightByGradeType = new Map((gradeTypes ?? []).map((gt) => [gt.id, Number(gt.weight)]))
+
+  // Une matière peut avoir plusieurs notes (devoir, composition...) : on en
+  // fait d'abord une moyenne pondérée par le poids de chaque type de note,
+  // avant d'appliquer le coefficient de la matière.
+  const entriesBySubject = new Map<string, { score: number; weight: number }[]>()
   for (const g of grades ?? []) {
-    gradeMap.set(`${g.student_id}:${g.subject_id}`, Number(g.score))
+    const key = `${g.student_id}:${g.subject_id}`
+    const list = entriesBySubject.get(key) ?? []
+    list.push({ score: Number(g.score), weight: weightByGradeType.get(g.grade_type_id) ?? 1 })
+    entriesBySubject.set(key, list)
+  }
+
+  function subjectAverage(studentId: string, subjectId: string): number | null {
+    const entries = entriesBySubject.get(`${studentId}:${subjectId}`)
+    if (!entries || entries.length === 0) return null
+    const totalWeight = entries.reduce((sum, e) => sum + e.weight, 0)
+    const totalWeighted = entries.reduce((sum, e) => sum + e.score * e.weight, 0)
+    return totalWeight > 0 ? totalWeighted / totalWeight : null
   }
 
   const bulletins: StudentBulletin[] = (students ?? []).map((s) => {
     const subjectGrades: SubjectGrade[] = (subjects ?? []).map((subj) => {
-      const score = gradeMap.get(`${s.id}:${subj.id}`) ?? null
+      const score = subjectAverage(s.id, subj.id)
       return {
         subjectName: subj.name,
         coefficient: subj.coefficient,

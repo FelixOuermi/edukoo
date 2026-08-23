@@ -11,16 +11,17 @@ export default async function NotesPage({
   const { school, schoolYear } = await getCurrentSchool()
   const supabase = await createClient()
 
-  const [{ data: classes }, { data: subjects }] = await Promise.all([
+  const [{ data: classes }, { data: subjects }, { data: gradeTypes }] = await Promise.all([
     supabase.from('classes').select('id, name').eq('school_id', school.id).order('name'),
     supabase.from('subjects').select('id, name').eq('school_id', school.id).order('name'),
+    supabase.from('grade_types').select('id, name, weight').eq('school_id', school.id).order('created_at'),
   ])
 
   const classId = classe || classes?.[0]?.id
   const subjectId = matiere || subjects?.[0]?.id
   const trimester = Number(trimestre || 1)
 
-  let students: { id: string; name: string; score: number | null }[] = []
+  let students: { id: string; name: string; scores: Record<string, number | null> }[] = []
 
   if (classId && subjectId && schoolYear) {
     const { data: classStudents } = await supabase
@@ -32,17 +33,22 @@ export default async function NotesPage({
 
     const { data: existingGrades } = await supabase
       .from('grades')
-      .select('student_id, score')
+      .select('student_id, grade_type_id, score')
       .eq('subject_id', subjectId)
       .eq('school_year_id', schoolYear.id)
       .eq('trimester', trimester)
 
-    const gradeByStudent = new Map((existingGrades ?? []).map((g) => [g.student_id, Number(g.score)]))
+    const scoreMap = new Map<string, number>()
+    for (const g of existingGrades ?? []) {
+      scoreMap.set(`${g.student_id}:${g.grade_type_id}`, Number(g.score))
+    }
 
     students = (classStudents ?? []).map((s) => ({
       id: s.id,
       name: `${s.first_name} ${s.last_name}`,
-      score: gradeByStudent.get(s.id) ?? null,
+      scores: Object.fromEntries(
+        (gradeTypes ?? []).map((gt) => [gt.id, scoreMap.get(`${s.id}:${gt.id}`) ?? null])
+      ),
     }))
   }
 
@@ -91,12 +97,17 @@ export default async function NotesPage({
         <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           Aucune année scolaire active. Configurez-la dans Paramètres avant de saisir des notes.
         </p>
+      ) : (gradeTypes ?? []).length === 0 ? (
+        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          Aucun type de note configuré. Ajoutez-en dans Classes &amp; Matières avant de saisir des notes.
+        </p>
       ) : classId && subjectId ? (
         <GradesForm
-          key={students.map((s) => `${s.id}:${s.score}`).join(',')}
+          key={`${classId}:${subjectId}:${trimester}`}
           classId={classId}
           subjectId={subjectId}
           trimester={trimester}
+          gradeTypes={gradeTypes ?? []}
           students={students}
         />
       ) : (

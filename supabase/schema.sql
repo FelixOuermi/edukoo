@@ -124,6 +124,18 @@ CREATE TABLE fee_payments (
   created_by UUID REFERENCES auth.users(id)
 );
 
+-- Types de notes (devoir, interrogation, composition...), propres à
+-- chaque école, avec un poids utilisé pour la moyenne pondérée d'une
+-- matière (indépendant du coefficient de la matière elle-même).
+CREATE TABLE grade_types (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  weight DECIMAL(4,2) NOT NULL DEFAULT 1 CHECK (weight > 0),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Notes
 CREATE TABLE grades (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -137,12 +149,14 @@ CREATE TABLE grades (
     ON DELETE CASCADE,
   school_year_id UUID REFERENCES school_years(id)
     ON DELETE CASCADE,
+  grade_type_id UUID NOT NULL REFERENCES grade_types(id)
+    ON DELETE RESTRICT,
   trimester INTEGER CHECK (trimester IN (1,2,3)),
   score DECIMAL(5,2),
   max_score DECIMAL(5,2) DEFAULT 20,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(student_id, subject_id,
-         school_year_id, trimester)
+         school_year_id, trimester, grade_type_id)
 );
 
 -- Absences
@@ -187,6 +201,9 @@ BEGIN
       NEW.email,
       'director'
     );
+
+    INSERT INTO grade_types (school_id, name, weight)
+    VALUES (new_school_id, 'Devoir', 1);
   END IF;
   RETURN NEW;
 END;
@@ -231,6 +248,7 @@ ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fee_structures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fee_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE grade_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absences ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
@@ -308,6 +326,10 @@ CREATE POLICY "School isolation: fee_payments"
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: grades"
   ON grades FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: grade_types"
+  ON grade_types FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: absences"

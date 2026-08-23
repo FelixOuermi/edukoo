@@ -1,15 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
-import { NewClassForm, NewSubjectForm } from './class-forms'
+import { NewClassForm, NewSubjectForm, NewGradeTypeForm, DeleteGradeTypeButton } from './class-forms'
 
 export default async function ClassesPage() {
-  const { school } = await getCurrentSchool()
+  const { school, role } = await getCurrentSchool()
   const supabase = await createClient()
+  const isDirector = role === 'director'
 
-  const [{ data: classes }, { data: subjects }, { data: students }] = await Promise.all([
+  const [{ data: classes }, { data: subjects }, { data: students }, { data: gradeTypes }] = await Promise.all([
     supabase.from('classes').select('id, name, level, max_students').eq('school_id', school.id).order('name'),
     supabase.from('subjects').select('id, name, coefficient').eq('school_id', school.id).order('name'),
     supabase.from('students').select('id, class_id').eq('school_id', school.id).eq('status', 'active'),
+    supabase.from('grade_types').select('id, name, weight').eq('school_id', school.id).order('created_at'),
   ])
 
   const countByClass = new Map<string, number>()
@@ -21,7 +23,7 @@ export default async function ClassesPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Classes & Matières</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
@@ -82,6 +84,41 @@ export default async function ClassesPage() {
             </table>
           </div>
           <NewSubjectForm />
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500 text-left">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Type de note</th>
+                  <th className="px-4 py-3 font-medium text-right">Poids</th>
+                  {isDirector && <th className="px-4 py-3 font-medium text-right"></th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {(gradeTypes ?? []).map((gt) => (
+                  <tr key={gt.id}>
+                    <td className="px-4 py-3 text-gray-900 font-medium">{gt.name}</td>
+                    <td className="px-4 py-3 text-right text-gray-600">×{gt.weight}</td>
+                    {isDirector && (
+                      <td className="px-4 py-3">
+                        <DeleteGradeTypeButton id={gt.id} />
+                      </td>
+                    )}
+                  </tr>
+                ))}
+                {(gradeTypes ?? []).length === 0 && (
+                  <tr>
+                    <td colSpan={isDirector ? 3 : 2} className="px-4 py-8 text-center text-gray-400">
+                      Aucun type de note créé.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {isDirector && <NewGradeTypeForm />}
         </div>
       </div>
     </div>

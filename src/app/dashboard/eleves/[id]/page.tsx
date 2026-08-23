@@ -42,7 +42,7 @@ export default async function FicheElevePage({
       .order('paid_at', { ascending: false }),
     supabase
       .from('grades')
-      .select('*, subjects(name, coefficient)')
+      .select('*, subjects(name, coefficient), grade_types(name)')
       .eq('student_id', id)
       .order('trimester'),
     supabase
@@ -167,7 +167,13 @@ export default async function FicheElevePage({
                   <ul className="text-sm space-y-1">
                     {list.map((g) => (
                       <li key={g.id} className="flex justify-between text-gray-700">
-                        <span>{(g.subjects as { name: string } | null)?.name}</span>
+                        <span>
+                          {(g.subjects as { name: string } | null)?.name}
+                          <span className="text-gray-400">
+                            {' '}
+                            ({(g.grade_types as { name: string } | null)?.name ?? '—'})
+                          </span>
+                        </span>
                         <span className="font-medium">{g.score}/{g.max_score}</span>
                       </li>
                     ))}
