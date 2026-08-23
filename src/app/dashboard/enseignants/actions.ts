@@ -4,9 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentSchool, type TeacherRole } from '@/lib/school'
+import { logAction } from '@/lib/audit-log'
 
 export async function inviteTeacher(_prevState: unknown, formData: FormData) {
-  const { school, role: actorRole } = await getCurrentSchool()
+  const { school, role: actorRole, teacherName: actorName } = await getCurrentSchool()
   if (actorRole !== 'director') {
     return { error: 'Seul le directeur peut inviter un membre du personnel.' }
   }
@@ -51,17 +52,20 @@ export async function inviteTeacher(_prevState: unknown, formData: FormData) {
     return { error: insertError.message }
   }
 
+  await logAction(supabase, school.id, actorName, 'Invitation', `${name} (${email}) invité comme ${invitedRole === 'director' ? 'directeur' : 'enseignant'}`)
+
   revalidatePath('/dashboard/enseignants')
   return { success: true, email }
 }
 
 export async function setTeacherActive(id: string, isActive: boolean) {
-  const { school, role: actorRole } = await getCurrentSchool()
+  const { school, role: actorRole, teacherName: actorName } = await getCurrentSchool()
   if (actorRole !== 'director') {
     return { error: 'Seul le directeur peut modifier le statut du personnel.' }
   }
 
   const supabase = await createClient()
+  const { data: target } = await supabase.from('teachers').select('name').eq('id', id).eq('school_id', school.id).maybeSingle()
   const { error } = await supabase
     .from('teachers')
     .update({ is_active: isActive })
@@ -70,12 +74,14 @@ export async function setTeacherActive(id: string, isActive: boolean) {
 
   if (error) return { error: error.message }
 
+  await logAction(supabase, school.id, actorName, isActive ? 'Réactivation' : 'Désactivation', target?.name ?? id)
+
   revalidatePath('/dashboard/enseignants')
   return { success: true }
 }
 
 export async function setTeacherRole(id: string, newRole: TeacherRole) {
-  const { school, role: actorRole, user } = await getCurrentSchool()
+  const { school, role: actorRole, user, teacherName: actorName } = await getCurrentSchool()
   if (actorRole !== 'director') {
     return { error: 'Seul le directeur peut modifier les rôles.' }
   }
@@ -83,7 +89,7 @@ export async function setTeacherRole(id: string, newRole: TeacherRole) {
   const supabase = await createClient()
   const { data: target } = await supabase
     .from('teachers')
-    .select('user_id')
+    .select('user_id, name')
     .eq('id', id)
     .eq('school_id', school.id)
     .maybeSingle()
@@ -99,6 +105,8 @@ export async function setTeacherRole(id: string, newRole: TeacherRole) {
     .eq('school_id', school.id)
 
   if (error) return { error: error.message }
+
+  await logAction(supabase, school.id, actorName, 'Changement de rôle', `${target?.name ?? id} → ${newRole === 'director' ? 'directeur' : 'enseignant'}`)
 
   revalidatePath('/dashboard/enseignants')
   return { success: true }

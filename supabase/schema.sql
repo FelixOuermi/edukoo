@@ -30,6 +30,24 @@ CREATE TABLE school_years (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Périodes (trimestres, semestres...) d'une année scolaire, avec dates
+-- réelles. `grades.trimester` référence `periods.number`, pas cette table
+-- directement (permet de ne pas forcer une période pour chaque note).
+CREATE TABLE periods (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  school_year_id UUID REFERENCES school_years(id)
+    ON DELETE CASCADE,
+  number INTEGER NOT NULL CHECK (number BETWEEN 1 AND 6),
+  name TEXT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (school_year_id, number),
+  CHECK (end_date > start_date)
+);
+
 -- Classes
 CREATE TABLE classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -166,7 +184,7 @@ CREATE TABLE grades (
     ON DELETE CASCADE,
   grade_type_id UUID NOT NULL REFERENCES grade_types(id)
     ON DELETE RESTRICT,
-  trimester INTEGER CHECK (trimester IN (1,2,3)),
+  trimester INTEGER CHECK (trimester BETWEEN 1 AND 6),
   score DECIMAL(5,2),
   max_score DECIMAL(5,2) DEFAULT 20,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -199,11 +217,24 @@ CREATE TABLE bulletin_appreciations (
     ON DELETE CASCADE,
   school_year_id UUID REFERENCES school_years(id)
     ON DELETE CASCADE,
-  trimester INTEGER CHECK (trimester IN (1,2,3)),
+  trimester INTEGER CHECK (trimester BETWEEN 1 AND 6),
   appreciation TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (student_id, school_year_id, trimester)
+);
+
+-- Journal d'audit : trace les actions sensibles (rôle, activation, suppression
+-- d'élève, paiement...) avec leur auteur, une description lisible et un
+-- horodatage. Lecture réservée au directeur (côté application).
+CREATE TABLE audit_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  actor_name TEXT NOT NULL,
+  action TEXT NOT NULL,
+  details TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Absences
@@ -288,6 +319,7 @@ CREATE TRIGGER set_receipt_number
 -- RLS
 ALTER TABLE schools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE school_years ENABLE ROW LEVEL SECURITY;
+ALTER TABLE periods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE class_subjects ENABLE ROW LEVEL SECURITY;
@@ -299,6 +331,7 @@ ALTER TABLE fee_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grade_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bulletin_appreciations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absences ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
@@ -360,6 +393,10 @@ CREATE POLICY "School isolation: schools"
   WITH CHECK (id = current_school_id());
 CREATE POLICY "School isolation: school_years"
   ON school_years FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: periods"
+  ON periods FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: classes"
@@ -450,6 +487,10 @@ CREATE POLICY "School isolation: grade_types"
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: bulletin_appreciations"
   ON bulletin_appreciations FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: audit_log"
+  ON audit_log FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: absences"

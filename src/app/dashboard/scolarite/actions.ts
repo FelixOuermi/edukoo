@@ -4,9 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
+import { logAction } from '@/lib/audit-log'
 
 export async function recordPayment(_prevState: unknown, formData: FormData) {
-  const { school, user, schoolYear } = await requireDirector()
+  const { school, user, schoolYear, teacherName: actorName } = await requireDirector()
   const supabase = await createClient()
 
   const studentId = formData.get('studentId') as string
@@ -20,7 +21,7 @@ export async function recordPayment(_prevState: unknown, formData: FormData) {
 
   const { data: student } = await supabase
     .from('students')
-    .select('class_id')
+    .select('class_id, first_name, last_name')
     .eq('id', studentId)
     .eq('school_id', school.id)
     .maybeSingle()
@@ -54,6 +55,14 @@ export async function recordPayment(_prevState: unknown, formData: FormData) {
     .single()
 
   if (error) return { error: error.message }
+
+  await logAction(
+    supabase,
+    school.id,
+    actorName,
+    'Paiement enregistré',
+    `${amount.toLocaleString('fr-FR')} FCFA pour ${student.first_name} ${student.last_name} (${paymentMethod})`
+  )
 
   revalidatePath('/dashboard/scolarite')
   revalidatePath(`/dashboard/eleves/${studentId}`)

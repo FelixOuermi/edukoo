@@ -117,6 +117,53 @@ export async function setCurrentSchoolYear(id: string) {
   return { success: true }
 }
 
+export async function createPeriod(_prevState: unknown, formData: FormData) {
+  const { school, schoolYear } = await requireDirector()
+  const supabase = await createClient()
+
+  if (!schoolYear) return { error: 'Activez une année scolaire avant de créer des périodes.' }
+
+  const number = Number(formData.get('number'))
+  const name = formData.get('name') as string
+  const startDate = formData.get('startDate') as string
+  const endDate = formData.get('endDate') as string
+
+  if (!number || !name || !startDate || !endDate) return { error: 'Tous les champs sont requis.' }
+  if (new Date(endDate) <= new Date(startDate)) return { error: 'La date de fin doit être après la date de début.' }
+
+  const { error } = await supabase.from('periods').upsert(
+    {
+      school_id: school.id,
+      school_year_id: schoolYear.id,
+      number,
+      name,
+      start_date: startDate,
+      end_date: endDate,
+    },
+    { onConflict: 'school_year_id,number' }
+  )
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/parametres')
+  revalidatePath('/dashboard/notes')
+  revalidatePath('/dashboard/bulletins')
+  return { success: true }
+}
+
+export async function deletePeriod(id: string) {
+  const { school } = await requireDirector()
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('periods').delete().eq('id', id).eq('school_id', school.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/parametres')
+  revalidatePath('/dashboard/notes')
+  revalidatePath('/dashboard/bulletins')
+  return { success: true }
+}
+
 export async function upsertFeeStructure(_prevState: unknown, formData: FormData) {
   const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()

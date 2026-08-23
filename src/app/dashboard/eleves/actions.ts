@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { logAction } from '@/lib/audit-log'
 
 async function generateRegistrationNumber(schoolId: string) {
   const supabase = await createClient()
@@ -70,10 +71,12 @@ export async function updateStudent(id: string, formData: FormData) {
 }
 
 export async function deleteStudent(id: string) {
-  const { school } = await getCurrentSchool()
+  const { school, teacherName: actorName } = await getCurrentSchool()
   const supabase = await createClient()
+  const { data: student } = await supabase.from('students').select('first_name, last_name').eq('id', id).eq('school_id', school.id).maybeSingle()
   const { error } = await supabase.from('students').delete().eq('id', id).eq('school_id', school.id)
   if (error) return { error: error.message }
+  if (student) await logAction(supabase, school.id, actorName, 'Suppression élève', `${student.first_name} ${student.last_name}`)
   revalidatePath('/dashboard/eleves')
   redirect('/dashboard/eleves')
 }

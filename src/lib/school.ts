@@ -14,7 +14,7 @@ export async function getCurrentSchool() {
 
   const { data: teacher } = await supabase
     .from('teachers')
-    .select('id, school_id, role')
+    .select('id, school_id, role, name')
     .eq('user_id', user.id)
     .single()
 
@@ -35,7 +35,14 @@ export async function getCurrentSchool() {
     .eq('is_current', true)
     .maybeSingle()
 
-  return { user, school, schoolYear, role: teacher.role as TeacherRole, teacherId: teacher.id as string }
+  return {
+    user,
+    school,
+    schoolYear,
+    role: teacher.role as TeacherRole,
+    teacherId: teacher.id as string,
+    teacherName: teacher.name as string,
+  }
 }
 
 export async function requireDirector() {

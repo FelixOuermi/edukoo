@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   Star,
+  ScrollText,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 import type { TeacherRole } from '@/lib/school'
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/bulletins', label: 'Notes & Bulletins', icon: ClipboardList, directorOnly: false },
   { href: '/dashboard/absences', label: 'Absences', icon: CalendarX, directorOnly: false },
   { href: '/dashboard/enseignants', label: 'Enseignants', icon: Users, directorOnly: false },
+  { href: '/dashboard/journal', label: "Journal d'audit", icon: ScrollText, directorOnly: true },
   { href: '/dashboard/parametres', label: 'Paramètres', icon: Settings, directorOnly: true },
 ]
 

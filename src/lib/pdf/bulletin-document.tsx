@@ -138,7 +138,7 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
             <Text style={styles.totalValue}>{bulletin.mention}</Text>
           </View>
           <View style={styles.totalItem}>
-            <Text style={styles.totalLabel}>Absences (année)</Text>
+            <Text style={styles.totalLabel}>Absences ({bulletin.absencesScope === 'period' ? 'période' : 'année'})</Text>
             <Text style={styles.totalValue}>
               {bulletin.absencesJustified + bulletin.absencesUnjustified}
             </Text>

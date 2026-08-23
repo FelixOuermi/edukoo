@@ -13,7 +13,7 @@ export default async function NotesPage({
   const supabase = await createClient()
   const isDirector = role === 'director'
 
-  const [{ data: allClasses }, { data: allSubjects }, { data: gradeTypes }, { data: assignments }] =
+  const [{ data: allClasses }, { data: allSubjects }, { data: gradeTypes }, { data: assignments }, { data: periods }] =
     await Promise.all([
       supabase.from('classes').select('id, name').eq('school_id', school.id).order('name'),
       supabase.from('subjects').select('id, name').eq('school_id', school.id).order('name'),
@@ -21,6 +21,9 @@ export default async function NotesPage({
       isDirector
         ? Promise.resolve({ data: [] as { class_id: string; subject_id: string }[] })
         : supabase.from('teacher_subjects').select('class_id, subject_id').eq('teacher_id', teacherId),
+      schoolYear
+        ? supabase.from('periods').select('number, name').eq('school_id', school.id).eq('school_year_id', schoolYear.id).order('number')
+        : Promise.resolve({ data: [] as { number: number; name: string }[] }),
     ])
 
   const assignedClassIds = new Set((assignments ?? []).map((a) => a.class_id))
@@ -38,6 +41,10 @@ export default async function NotesPage({
     : (allSubjects ?? []).filter((s) => classId && assignedSubjectIdsByClass.get(classId)?.has(s.id))
   const subjectId = matiere || subjects[0]?.id
   const trimester = Number(trimestre || 1)
+  const periodOptions =
+    (periods ?? []).length > 0
+      ? (periods ?? []).map((p) => ({ value: p.number, label: p.name }))
+      : [1, 2, 3].map((n) => ({ value: n, label: `Trimestre ${n}` }))
 
   const hasNoAssignment = !isDirector && assignedClassIds.size === 0
 
@@ -110,9 +117,11 @@ export default async function NotesPage({
               defaultValue={String(trimester)}
               className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
             >
-              <option value="1">Trimestre 1</option>
-              <option value="2">Trimestre 2</option>
-              <option value="3">Trimestre 3</option>
+              {periodOptions.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
             </select>
             <button type="submit" className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800">
               Afficher

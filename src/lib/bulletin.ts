@@ -18,6 +18,7 @@ export interface StudentBulletin {
   appreciation: string | null
   absencesJustified: number
   absencesUnjustified: number
+  absencesScope: 'period' | 'year'
 }
 
 export function mentionFor(average: number | null) {
@@ -58,6 +59,17 @@ export async function computeClassBulletins({
     .eq('school_id', schoolId)
     .maybeSingle()
 
+  const { data: period } = await supabase
+    .from('periods')
+    .select('start_date, end_date')
+    .eq('school_id', schoolId)
+    .eq('school_year_id', schoolYearId)
+    .eq('number', trimester)
+    .maybeSingle()
+
+  const absencesRange = period ?? schoolYear
+  const absencesScope: 'period' | 'year' = period ? 'period' : 'year'
+
   const [
     { data: students },
     { data: subjects },
@@ -89,14 +101,14 @@ export async function computeClassBulletins({
       .eq('school_id', schoolId)
       .eq('school_year_id', schoolYearId)
       .eq('trimester', trimester),
-    schoolYear
+    absencesRange
       ? supabase
           .from('absences')
           .select('student_id, is_justified')
           .eq('class_id', classId)
           .eq('school_id', schoolId)
-          .gte('absence_date', schoolYear.start_date)
-          .lte('absence_date', schoolYear.end_date)
+          .gte('absence_date', absencesRange.start_date)
+          .lte('absence_date', absencesRange.end_date)
       : Promise.resolve({ data: [] as { student_id: string; is_justified: boolean }[] }),
   ])
 
@@ -162,6 +174,7 @@ export async function computeClassBulletins({
       appreciation: appreciationByStudent.get(s.id) ?? null,
       absencesJustified: absenceCounts.justified,
       absencesUnjustified: absenceCounts.unjustified,
+      absencesScope,
     }
   })
 
