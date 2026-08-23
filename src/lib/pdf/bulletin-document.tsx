@@ -132,12 +132,27 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
             <Text style={styles.totalLabel}>Mention</Text>
             <Text style={styles.totalValue}>{bulletin.mention}</Text>
           </View>
+          <View style={styles.totalItem}>
+            <Text style={styles.totalLabel}>Absences (année)</Text>
+            <Text style={styles.totalValue}>
+              {bulletin.absencesJustified + bulletin.absencesUnjustified}
+            </Text>
+            <Text style={{ fontSize: 7, color: '#9ca3af', marginTop: 2 }}>
+              dont {bulletin.absencesUnjustified} non justifiée{bulletin.absencesUnjustified > 1 ? 's' : ''}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.appreciationBox}>
-          <Text style={styles.appreciationLabel}>Appréciation du directeur</Text>
-          <View style={styles.appreciationLine} />
-          <View style={styles.appreciationLine} />
+          <Text style={styles.appreciationLabel}>Appréciation</Text>
+          {bulletin.appreciation ? (
+            <Text style={{ fontSize: 10, color: '#1f2937', lineHeight: 1.5 }}>{bulletin.appreciation}</Text>
+          ) : (
+            <>
+              <View style={styles.appreciationLine} />
+              <View style={styles.appreciationLine} />
+            </>
+          )}
         </View>
 
         <View style={styles.signatureRow}>

@@ -53,6 +53,21 @@ CREATE TABLE subjects (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Coefficient d'une matière spécifique à une classe (surcharge le
+-- coefficient global de subjects quand une ligne existe pour la paire).
+CREATE TABLE class_subjects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  class_id UUID REFERENCES classes(id)
+    ON DELETE CASCADE,
+  subject_id UUID REFERENCES subjects(id)
+    ON DELETE CASCADE,
+  coefficient INTEGER NOT NULL DEFAULT 1 CHECK (coefficient > 0),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (class_id, subject_id)
+);
+
 -- Enseignants
 CREATE TABLE teachers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -159,6 +174,38 @@ CREATE TABLE grades (
          school_year_id, trimester, grade_type_id)
 );
 
+-- Affectation d'un enseignant à ses classes/matières : restreint, pour un
+-- compte 'teacher', ce qu'il peut voir/saisir dans Notes et Absences.
+CREATE TABLE teacher_subjects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  teacher_id UUID REFERENCES teachers(id)
+    ON DELETE CASCADE,
+  class_id UUID REFERENCES classes(id)
+    ON DELETE CASCADE,
+  subject_id UUID REFERENCES subjects(id)
+    ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (teacher_id, class_id, subject_id)
+);
+
+-- Appréciation générale d'un bulletin (élève × année scolaire × trimestre).
+CREATE TABLE bulletin_appreciations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  student_id UUID REFERENCES students(id)
+    ON DELETE CASCADE,
+  school_year_id UUID REFERENCES school_years(id)
+    ON DELETE CASCADE,
+  trimester INTEGER CHECK (trimester IN (1,2,3)),
+  appreciation TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (student_id, school_year_id, trimester)
+);
+
 -- Absences
 CREATE TABLE absences (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -243,12 +290,15 @@ ALTER TABLE schools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE school_years ENABLE ROW LEVEL SECURITY;
 ALTER TABLE classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE class_subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teacher_subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fee_structures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fee_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grade_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bulletin_appreciations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE absences ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
@@ -308,8 +358,16 @@ CREATE POLICY "School isolation: subjects"
   ON subjects FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: class_subjects"
+  ON class_subjects FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: teachers"
   ON teachers FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: teacher_subjects"
+  ON teacher_subjects FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: students"
@@ -330,6 +388,10 @@ CREATE POLICY "School isolation: grades"
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: grade_types"
   ON grade_types FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: bulletin_appreciations"
+  ON bulletin_appreciations FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: absences"

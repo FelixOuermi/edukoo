@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { computeClassBulletins } from '@/lib/bulletin'
+import { AppreciationCell } from './appreciation-cell'
 import { Download } from 'lucide-react'
 
 export default async function BulletinsPage({
@@ -77,7 +78,7 @@ export default async function BulletinsPage({
           Aucune année scolaire active. Configurez-la dans Paramètres.
         </p>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-left">
               <tr>
@@ -85,18 +86,28 @@ export default async function BulletinsPage({
                 <th className="px-4 py-3 font-medium text-right">Moyenne</th>
                 <th className="px-4 py-3 font-medium text-right">Rang</th>
                 <th className="px-4 py-3 font-medium">Mention</th>
+                <th className="px-4 py-3 font-medium text-right">Absences (année)</th>
+                <th className="px-4 py-3 font-medium">Appréciation</th>
                 <th className="px-4 py-3 font-medium text-right">Bulletin</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {(result?.bulletins ?? []).map((b) => (
                 <tr key={b.studentId} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900 font-medium">{b.studentName}</td>
+                  <td className="px-4 py-3 text-gray-900 font-medium whitespace-nowrap">{b.studentName}</td>
                   <td className="px-4 py-3 text-right text-gray-800">
                     {b.average !== null ? b.average.toFixed(2) : '—'}/20
                   </td>
                   <td className="px-4 py-3 text-right text-gray-600">{b.rank ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{b.mention}</td>
+                  <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
+                    {b.absencesJustified + b.absencesUnjustified === 0
+                      ? '—'
+                      : `${b.absencesJustified + b.absencesUnjustified} (${b.absencesUnjustified} non just.)`}
+                  </td>
+                  <td className="px-4 py-3">
+                    <AppreciationCell studentId={b.studentId} trimester={trimester} initialValue={b.appreciation} />
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <a
                       href={`/dashboard/bulletins/eleve/${b.studentId}/pdf?trimestre=${trimester}`}
@@ -111,7 +122,7 @@ export default async function BulletinsPage({
               ))}
               {(result?.bulletins ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
                     Aucun élève dans cette classe.
                   </td>
                 </tr>

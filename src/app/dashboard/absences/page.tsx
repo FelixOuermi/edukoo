@@ -8,16 +8,21 @@ export default async function AbsencesPage({
   searchParams: Promise<{ classe?: string; date?: string }>
 }) {
   const { classe, date } = await searchParams
-  const { school } = await getCurrentSchool()
+  const { school, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
+  const isDirector = role === 'director'
 
-  const { data: classes } = await supabase
-    .from('classes')
-    .select('id, name')
-    .eq('school_id', school.id)
-    .order('name')
+  const [{ data: allClasses }, { data: assignments }] = await Promise.all([
+    supabase.from('classes').select('id, name').eq('school_id', school.id).order('name'),
+    isDirector
+      ? Promise.resolve({ data: [] as { class_id: string }[] })
+      : supabase.from('teacher_subjects').select('class_id').eq('teacher_id', teacherId),
+  ])
 
-  const classId = classe || classes?.[0]?.id
+  const assignedClassIds = new Set((assignments ?? []).map((a) => a.class_id))
+  const classes = isDirector ? (allClasses ?? []) : (allClasses ?? []).filter((c) => assignedClassIds.has(c.id))
+
+  const classId = classe || classes[0]?.id
   const selectedDate = date || new Date().toISOString().slice(0, 10)
 
   let students: {
@@ -98,6 +103,10 @@ export default async function AbsencesPage({
           schoolName={school.name}
           students={students}
         />
+      ) : !isDirector ? (
+        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          Aucune classe ne vous a été assignée. Demandez à votre directeur de vous affecter depuis la page Enseignants.
+        </p>
       ) : (
         <p className="text-sm text-gray-400">Créez d&apos;abord une classe.</p>
       )}

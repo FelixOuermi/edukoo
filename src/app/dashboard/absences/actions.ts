@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 
 export async function saveAbsences(_prevState: unknown, formData: FormData) {
-  const { school } = await getCurrentSchool()
+  const { school, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
 
   const classId = formData.get('classId') as string
@@ -13,6 +13,16 @@ export async function saveAbsences(_prevState: unknown, formData: FormData) {
   const studentIds = formData.getAll('studentId') as string[]
 
   if (!classId || !date) return { error: 'Classe et date sont requises.' }
+
+  if (role !== 'director') {
+    const { data: assigned } = await supabase
+      .from('teacher_subjects')
+      .select('id')
+      .eq('teacher_id', teacherId)
+      .eq('class_id', classId)
+      .maybeSingle()
+    if (!assigned) return { error: "Vous n'êtes pas affecté à cette classe." }
+  }
 
   const [{ data: klass }, { data: validStudents }] = await Promise.all([
     supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),

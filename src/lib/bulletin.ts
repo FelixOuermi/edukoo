@@ -15,6 +15,9 @@ export interface StudentBulletin {
   average: number | null
   rank: number | null
   mention: string
+  appreciation: string | null
+  absencesJustified: number
+  absencesUnjustified: number
 }
 
 export function mentionFor(average: number | null) {
@@ -48,7 +51,22 @@ export async function computeClassBulletins({
 
   if (!klass) return { className: '—', bulletins: [] }
 
-  const [{ data: students }, { data: subjects }, { data: gradeTypes }, { data: grades }] = await Promise.all([
+  const { data: schoolYear } = await supabase
+    .from('school_years')
+    .select('start_date, end_date')
+    .eq('id', schoolYearId)
+    .eq('school_id', schoolId)
+    .maybeSingle()
+
+  const [
+    { data: students },
+    { data: subjects },
+    { data: classCoefficients },
+    { data: gradeTypes },
+    { data: grades },
+    { data: appreciations },
+    { data: absences },
+  ] = await Promise.all([
     supabase
       .from('students')
       .select('id, first_name, last_name')
@@ -57,6 +75,7 @@ export async function computeClassBulletins({
       .eq('status', 'active')
       .order('last_name'),
     supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
+    supabase.from('class_subjects').select('subject_id, coefficient').eq('school_id', schoolId).eq('class_id', classId),
     supabase.from('grade_types').select('id, weight').eq('school_id', schoolId),
     supabase
       .from('grades')
@@ -64,10 +83,35 @@ export async function computeClassBulletins({
       .eq('class_id', classId)
       .eq('school_year_id', schoolYearId)
       .eq('trimester', trimester),
+    supabase
+      .from('bulletin_appreciations')
+      .select('student_id, appreciation')
+      .eq('school_id', schoolId)
+      .eq('school_year_id', schoolYearId)
+      .eq('trimester', trimester),
+    schoolYear
+      ? supabase
+          .from('absences')
+          .select('student_id, is_justified')
+          .eq('class_id', classId)
+          .eq('school_id', schoolId)
+          .gte('absence_date', schoolYear.start_date)
+          .lte('absence_date', schoolYear.end_date)
+      : Promise.resolve({ data: [] as { student_id: string; is_justified: boolean }[] }),
   ])
 
   const className = klass.name
   const weightByGradeType = new Map((gradeTypes ?? []).map((gt) => [gt.id, Number(gt.weight)]))
+  const coefficientBySubject = new Map((classCoefficients ?? []).map((c) => [c.subject_id, c.coefficient]))
+  const appreciationByStudent = new Map((appreciations ?? []).map((a) => [a.student_id, a.appreciation]))
+
+  const absencesByStudent = new Map<string, { justified: number; unjustified: number }>()
+  for (const a of absences ?? []) {
+    const entry = absencesByStudent.get(a.student_id) ?? { justified: 0, unjustified: 0 }
+    if (a.is_justified) entry.justified++
+    else entry.unjustified++
+    absencesByStudent.set(a.student_id, entry)
+  }
 
   // Une matière peut avoir plusieurs notes (devoir, composition...) : on en
   // fait d'abord une moyenne pondérée par le poids de chaque type de note,
@@ -91,11 +135,12 @@ export async function computeClassBulletins({
   const bulletins: StudentBulletin[] = (students ?? []).map((s) => {
     const subjectGrades: SubjectGrade[] = (subjects ?? []).map((subj) => {
       const score = subjectAverage(s.id, subj.id)
+      const coefficient = coefficientBySubject.get(subj.id) ?? subj.coefficient
       return {
         subjectName: subj.name,
-        coefficient: subj.coefficient,
+        coefficient,
         score,
-        weighted: score !== null ? score * subj.coefficient : null,
+        weighted: score !== null ? score * coefficient : null,
       }
     })
 
@@ -103,6 +148,8 @@ export async function computeClassBulletins({
     const totalCoef = graded.reduce((sum, sg) => sum + sg.coefficient, 0)
     const totalWeighted = graded.reduce((sum, sg) => sum + (sg.weighted ?? 0), 0)
     const average = totalCoef > 0 ? totalWeighted / totalCoef : null
+
+    const absenceCounts = absencesByStudent.get(s.id) ?? { justified: 0, unjustified: 0 }
 
     return {
       studentId: s.id,
@@ -112,6 +159,9 @@ export async function computeClassBulletins({
       average,
       rank: null,
       mention: mentionFor(average),
+      appreciation: appreciationByStudent.get(s.id) ?? null,
+      absencesJustified: absenceCounts.justified,
+      absencesUnjustified: absenceCounts.unjustified,
     }
   })
 

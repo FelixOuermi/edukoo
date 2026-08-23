@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState, useTransition } from 'react'
-import { createClass, createSubject, createGradeType, deleteGradeType } from './actions'
+import { createClass, createSubject, createGradeType, deleteGradeType, saveClassCoefficients } from './actions'
 
 export function NewClassForm() {
   const [state, formAction, pending] = useActionState(createClass, null)
@@ -131,5 +131,61 @@ export function DeleteGradeTypeButton({ id }: { id: string }) {
       </button>
       {error && <p className="text-[11px] text-rose-600 mt-1">{error}</p>}
     </div>
+  )
+}
+
+interface CoefficientSubject {
+  id: string
+  name: string
+  defaultCoefficient: number
+  overrideCoefficient: number | null
+}
+
+export function ClassCoefficientsForm({ classId, subjects }: { classId: string; subjects: CoefficientSubject[] }) {
+  const [state, formAction, pending] = useActionState(saveClassCoefficients, null)
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <input type="hidden" name="classId" value={classId} />
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-gray-500 text-left border-b border-gray-100">
+            <tr>
+              <th className="py-2 font-medium">Matière</th>
+              <th className="py-2 font-medium w-32">Coefficient</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {subjects.map((s) => (
+              <tr key={s.id}>
+                <td className="py-2 text-gray-800">
+                  {s.name}
+                  <input type="hidden" name="subjectId" value={s.id} />
+                </td>
+                <td className="py-2">
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    name={`coefficient_${s.id}`}
+                    defaultValue={s.overrideCoefficient ?? s.defaultCoefficient}
+                    className="w-20 px-2 py-1.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
+      {state?.success && <p className="text-xs text-emerald-600">Coefficients enregistrés.</p>}
+      <button
+        type="submit"
+        disabled={pending}
+        className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+      >
+        {pending ? 'Enregistrement...' : 'Enregistrer les coefficients'}
+      </button>
+    </form>
   )
 }

@@ -103,3 +103,56 @@ export async function setTeacherRole(id: string, newRole: TeacherRole) {
   revalidatePath('/dashboard/enseignants')
   return { success: true }
 }
+
+export async function saveTeacherAssignments(_prevState: unknown, formData: FormData) {
+  const { school, role: actorRole } = await getCurrentSchool()
+  if (actorRole !== 'director') {
+    return { error: 'Seul le directeur peut affecter le personnel.' }
+  }
+
+  const supabase = await createClient()
+  const teacherId = formData.get('teacherId') as string
+  const classId = formData.get('classId') as string
+  const subjectIds = formData.getAll('subjectId') as string[]
+
+  if (!teacherId || !classId) return { error: 'Enseignant et classe sont requis.' }
+
+  const [{ data: teacher }, { data: klass }, { data: validSubjects }] = await Promise.all([
+    supabase.from('teachers').select('id').eq('id', teacherId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('subjects').select('id').eq('school_id', school.id).in('id', subjectIds),
+  ])
+
+  if (!teacher || !klass) return { error: 'Enseignant ou classe introuvable.' }
+  const validSubjectIds = new Set((validSubjects ?? []).map((s) => s.id))
+  const selectedSubjectIds = subjectIds.filter((id) => validSubjectIds.has(id))
+
+  // Remplace l'affectation de cet enseignant pour CETTE classe : les
+  // matières décochées sont retirées, les nouvelles cochées sont ajoutées.
+  // Les affectations sur d'autres classes ne sont pas touchées.
+  const { error: deleteError } = await supabase
+    .from('teacher_subjects')
+    .delete()
+    .eq('teacher_id', teacherId)
+    .eq('class_id', classId)
+    .eq('school_id', school.id)
+
+  if (deleteError) return { error: deleteError.message }
+
+  if (selectedSubjectIds.length > 0) {
+    const { error: insertError } = await supabase.from('teacher_subjects').insert(
+      selectedSubjectIds.map((subjectId) => ({
+        school_id: school.id,
+        teacher_id: teacherId,
+        class_id: classId,
+        subject_id: subjectId,
+      }))
+    )
+    if (insertError) return { error: insertError.message }
+  }
+
+  revalidatePath('/dashboard/enseignants')
+  revalidatePath('/dashboard/notes')
+  revalidatePath('/dashboard/absences')
+  return { success: true }
+}

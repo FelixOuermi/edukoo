@@ -96,3 +96,44 @@ export async function deleteGradeType(id: string) {
   revalidatePath('/dashboard/notes')
   return { success: true }
 }
+
+export async function saveClassCoefficients(_prevState: unknown, formData: FormData) {
+  const { school } = await requireDirector()
+  const supabase = await createClient()
+
+  const classId = formData.get('classId') as string
+  const subjectIds = formData.getAll('subjectId') as string[]
+
+  if (!classId) return { error: 'Classe requise.' }
+
+  const [{ data: klass }, { data: validSubjects }] = await Promise.all([
+    supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('subjects').select('id').eq('school_id', school.id).in('id', subjectIds),
+  ])
+
+  if (!klass) return { error: 'Classe introuvable.' }
+  const validSubjectIds = new Set((validSubjects ?? []).map((s) => s.id))
+
+  const rows = subjectIds
+    .filter((id) => validSubjectIds.has(id))
+    .map((subjectId) => {
+      const coefficient = Number(formData.get(`coefficient_${subjectId}`))
+      return { subjectId, coefficient }
+    })
+    .filter((r) => r.coefficient > 0)
+    .map((r) => ({
+      school_id: school.id,
+      class_id: classId,
+      subject_id: r.subjectId,
+      coefficient: r.coefficient,
+    }))
+
+  if (rows.length === 0) return { error: 'Aucun coefficient valide à enregistrer.' }
+
+  const { error } = await supabase.from('class_subjects').upsert(rows, { onConflict: 'class_id,subject_id' })
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/classes')
+  revalidatePath('/dashboard/bulletins')
+  return { success: true }
+}
