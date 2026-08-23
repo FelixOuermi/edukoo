@@ -15,24 +15,25 @@ import {
   Star,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
+import type { TeacherRole } from '@/lib/school'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/dashboard/eleves', label: 'Élèves', icon: GraduationCap },
-  { href: '/dashboard/classes', label: 'Classes', icon: BookOpen },
-  { href: '/dashboard/scolarite', label: 'Scolarité & Paiements', icon: Wallet },
-  { href: '/dashboard/bulletins', label: 'Notes & Bulletins', icon: ClipboardList },
-  { href: '/dashboard/absences', label: 'Absences', icon: CalendarX },
-  { href: '/dashboard/enseignants', label: 'Enseignants', icon: Users },
-  { href: '/dashboard/parametres', label: 'Paramètres', icon: Settings },
+  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, directorOnly: false },
+  { href: '/dashboard/eleves', label: 'Élèves', icon: GraduationCap, directorOnly: false },
+  { href: '/dashboard/classes', label: 'Classes', icon: BookOpen, directorOnly: false },
+  { href: '/dashboard/scolarite', label: 'Scolarité & Paiements', icon: Wallet, directorOnly: true },
+  { href: '/dashboard/bulletins', label: 'Notes & Bulletins', icon: ClipboardList, directorOnly: false },
+  { href: '/dashboard/absences', label: 'Absences', icon: CalendarX, directorOnly: false },
+  { href: '/dashboard/enseignants', label: 'Enseignants', icon: Users, directorOnly: false },
+  { href: '/dashboard/parametres', label: 'Paramètres', icon: Settings, directorOnly: true },
 ]
 
 const MOBILE_ITEMS = [
-  { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard },
-  { href: '/dashboard/eleves', label: 'Élèves', icon: GraduationCap },
-  { href: '/dashboard/scolarite', label: 'Scolarité', icon: Wallet },
-  { href: '/dashboard/absences', label: 'Absences', icon: CalendarX },
-  { href: '/dashboard/parametres', label: 'Réglages', icon: Settings },
+  { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard, directorOnly: false },
+  { href: '/dashboard/eleves', label: 'Élèves', icon: GraduationCap, directorOnly: false },
+  { href: '/dashboard/scolarite', label: 'Scolarité', icon: Wallet, directorOnly: true },
+  { href: '/dashboard/absences', label: 'Absences', icon: CalendarX, directorOnly: false },
+  { href: '/dashboard/parametres', label: 'Réglages', icon: Settings, directorOnly: true },
 ]
 
 function isActive(pathname: string, href: string) {
@@ -40,8 +41,9 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href)
 }
 
-export function Sidebar({ schoolName }: { schoolName: string }) {
+export function Sidebar({ schoolName, role }: { schoolName: string; role: TeacherRole }) {
   const pathname = usePathname()
+  const items = NAV_ITEMS.filter((item) => !item.directorOnly || role === 'director')
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-[#4c1d95] text-white">
@@ -57,7 +59,7 @@ export function Sidebar({ schoolName }: { schoolName: string }) {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href)
           return (
             <Link
@@ -76,19 +78,21 @@ export function Sidebar({ schoolName }: { schoolName: string }) {
         })}
       </nav>
 
-      <div className="px-3 pt-4 border-t border-violet-800/60">
-        <Link
-          href="/dashboard/upgrade"
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            isActive(pathname, '/dashboard/upgrade')
-              ? 'bg-amber-400/15 text-amber-300'
-              : 'text-amber-400 hover:bg-amber-400/10'
-          }`}
-        >
-          <Star className="w-[18px] h-[18px]" />
-          Passer au plan payant
-        </Link>
-      </div>
+      {role === 'director' && (
+        <div className="px-3 pt-4 border-t border-violet-800/60">
+          <Link
+            href="/dashboard/upgrade"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive(pathname, '/dashboard/upgrade')
+                ? 'bg-amber-400/15 text-amber-300'
+                : 'text-amber-400 hover:bg-amber-400/10'
+            }`}
+          >
+            <Star className="w-[18px] h-[18px]" />
+            Passer au plan payant
+          </Link>
+        </div>
+      )}
 
       <form action={signOut} className="px-3 py-4">
         <button
@@ -103,12 +107,13 @@ export function Sidebar({ schoolName }: { schoolName: string }) {
   )
 }
 
-export function MobileNav() {
+export function MobileNav({ role }: { role: TeacherRole }) {
   const pathname = usePathname()
+  const items = MOBILE_ITEMS.filter((item) => !item.directorOnly || role === 'director')
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#4c1d95] border-t border-violet-800/60 flex justify-around items-center h-16 z-50">
-      {MOBILE_ITEMS.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon }) => {
         const active = isActive(pathname, href)
         return (
           <Link

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Users, TrendingUp, Wallet, CalendarX, Plus } from 'lucide-react'
+import { Users, TrendingUp, Wallet, CalendarX, Plus, ClipboardList, BookOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 
@@ -8,39 +8,102 @@ function formatFCFA(amount: number) {
 }
 
 export default async function DashboardPage() {
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear, role } = await getCurrentSchool()
   const supabase = await createClient()
   const today = new Date().toISOString().slice(0, 10)
+  const isDirector = role === 'director'
 
-  const [
-    { data: students },
-    { data: feeStructures },
-    { data: payments },
-    { data: absencesToday },
-  ] = await Promise.all([
-    supabase
-      .from('students')
-      .select('id, first_name, last_name, status, class_id, classes(name)')
-      .eq('school_id', school.id),
-    schoolYear
-      ? supabase
-          .from('fee_structures')
-          .select('class_id, total_amount')
-          .eq('school_id', school.id)
-          .eq('school_year_id', schoolYear.id)
-      : Promise.resolve({ data: [] as { class_id: string; total_amount: number }[] }),
-    supabase
-      .from('fee_payments')
-      .select('student_id, amount')
-      .eq('school_id', school.id),
-    supabase
-      .from('absences')
-      .select('id, student_id, students(first_name, last_name)')
-      .eq('school_id', school.id)
-      .eq('absence_date', today),
-  ])
+  const [{ data: students }, { data: feeStructures }, { data: payments }, { data: absencesToday }] =
+    await Promise.all([
+      supabase
+        .from('students')
+        .select('id, first_name, last_name, status, class_id, classes(name)')
+        .eq('school_id', school.id),
+      isDirector && schoolYear
+        ? supabase
+            .from('fee_structures')
+            .select('class_id, total_amount')
+            .eq('school_id', school.id)
+            .eq('school_year_id', schoolYear.id)
+        : Promise.resolve({ data: [] as { class_id: string; total_amount: number }[] }),
+      isDirector
+        ? supabase.from('fee_payments').select('student_id, amount').eq('school_id', school.id)
+        : Promise.resolve({ data: [] as { student_id: string; amount: number }[] }),
+      supabase
+        .from('absences')
+        .select('id, student_id, students(first_name, last_name)')
+        .eq('school_id', school.id)
+        .eq('absence_date', today),
+    ])
 
   const activeStudents = (students ?? []).filter((s) => s.status === 'active')
+
+  if (!isDirector) {
+    const quickLinks = [
+      { href: '/dashboard/notes', label: 'Saisir des notes', icon: ClipboardList },
+      { href: '/dashboard/absences', label: "Faire l'appel", icon: CalendarX },
+      { href: '/dashboard/bulletins', label: 'Consulter les bulletins', icon: BookOpen },
+    ]
+
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+          <p className="text-gray-500 text-sm mt-1">{school.name}</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-100 text-[#7c3aed]">
+              <Users className="w-5 h-5" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 mt-4">{activeStudents.length.toLocaleString('fr-FR')}</p>
+            <p className="text-sm text-gray-500 mt-1">Élèves actifs</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-rose-100 text-rose-600">
+              <CalendarX className="w-5 h-5" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 mt-4">{absencesToday?.length ?? 0}</p>
+            <p className="text-sm text-gray-500 mt-1">Absences aujourd&apos;hui</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {quickLinks.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-5 hover:border-violet-300 hover:shadow-sm transition-all"
+            >
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-100 text-[#7c3aed] shrink-0">
+                <Icon className="w-5 h-5" />
+              </div>
+              <span className="font-medium text-gray-800 text-sm">{label}</span>
+            </Link>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Absents aujourd&apos;hui</h2>
+          {(absencesToday?.length ?? 0) === 0 ? (
+            <p className="text-sm text-gray-400">Aucune absence enregistrée aujourd&apos;hui.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {absencesToday!.map((a) => {
+                const student = a.students as unknown as { first_name: string; last_name: string } | null
+                return (
+                  <li key={a.id} className="py-3 text-sm text-gray-800">
+                    {student ? `${student.first_name} ${student.last_name}` : 'Élève'}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const feeByClass = new Map<string, number>()
   for (const fs of feeStructures ?? []) {

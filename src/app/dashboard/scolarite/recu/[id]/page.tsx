@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CheckCircle2, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -14,7 +14,7 @@ export default async function RecuPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { school } = await getCurrentSchool()
+  const { school } = await requireDirector()
   const supabase = await createClient()
 
   const { data: payment } = await supabase

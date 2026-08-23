@@ -2,10 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 
 export async function updateSchoolInfo(_prevState: unknown, formData: FormData) {
-  const { school } = await getCurrentSchool()
+  const { school } = await requireDirector()
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -29,7 +29,7 @@ export async function updateSchoolInfo(_prevState: unknown, formData: FormData) 
 }
 
 export async function createSchoolYear(_prevState: unknown, formData: FormData) {
-  const { school } = await getCurrentSchool()
+  const { school } = await requireDirector()
   const supabase = await createClient()
 
   const name = formData.get('name') as string
@@ -55,7 +55,7 @@ export async function createSchoolYear(_prevState: unknown, formData: FormData) 
 }
 
 export async function setCurrentSchoolYear(id: string) {
-  const { school } = await getCurrentSchool()
+  const { school } = await requireDirector()
   const supabase = await createClient()
 
   await supabase.from('school_years').update({ is_current: false }).eq('school_id', school.id)
@@ -72,7 +72,7 @@ export async function setCurrentSchoolYear(id: string) {
 }
 
 export async function upsertFeeStructure(_prevState: unknown, formData: FormData) {
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
 
   if (!schoolYear) return { error: 'Créez une année scolaire active avant de définir les frais.' }

@@ -1,5 +1,5 @@
 import { Check, MessageCircle } from 'lucide-react'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 
 const EDUKOO_PAYMENT_PHONE_DISPLAY = '+226 64 55 77 30'
 const EDUKOO_WHATSAPP_NUMBER = '22664557730'
@@ -45,7 +45,7 @@ function formatFCFA(amount: number) {
 }
 
 export default async function UpgradePage() {
-  const { school, user } = await getCurrentSchool()
+  const { school, user } = await requireDirector()
 
   return (
     <div className="space-y-8">

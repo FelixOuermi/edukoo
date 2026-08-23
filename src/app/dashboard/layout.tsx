@@ -7,7 +7,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { school } = await getCurrentSchool()
+  const { school, role } = await getCurrentSchool()
 
   const isTrial = school.plan === 'trial'
   const daysRemaining = school.trial_ends_at
@@ -19,8 +19,8 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar schoolName={school.name} />
-      <MobileNav />
+      <Sidebar schoolName={school.name} role={role} />
+      <MobileNav role={role} />
       <main className="md:pl-64 pb-20 md:pb-0">
         {isTrial && (
           <div className="bg-violet-100 border-b border-violet-200 px-4 py-3">
@@ -32,12 +32,14 @@ export default async function DashboardLayout({
                 </span>{' '}
                 avant expiration.
               </p>
-              <Link
-                href="/dashboard/upgrade"
-                className="shrink-0 inline-flex items-center gap-1 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
-              >
-                Choisir un plan →
-              </Link>
+              {role === 'director' && (
+                <Link
+                  href="/dashboard/upgrade"
+                  className="shrink-0 inline-flex items-center gap-1 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+                >
+                  Choisir un plan →
+                </Link>
+              )}
             </div>
           </div>
         )}

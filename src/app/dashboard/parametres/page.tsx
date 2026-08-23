@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 import { SchoolInfoForm, SchoolYearForm, FeeStructureForm, ActivateSchoolYearButton } from './settings-forms'
 
 function formatFCFA(amount: number) {
@@ -7,7 +7,7 @@ function formatFCFA(amount: number) {
 }
 
 export default async function ParametresPage() {
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
 
   const [{ data: schoolYears }, { data: classes }, { data: feeStructures }] = await Promise.all([

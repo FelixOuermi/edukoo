@@ -1,15 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { InviteTeacherForm, TeacherRow } from './teacher-list'
 
 export default async function EnseignantsPage() {
-  const { school } = await getCurrentSchool()
+  const { school, role } = await getCurrentSchool()
   const supabase = await createClient()
 
   const { data: teachers } = await supabase
     .from('teachers')
-    .select('id, name, phone, email, is_active')
+    .select('id, name, phone, email, role, is_active, user_id')
     .eq('school_id', school.id)
     .order('name')
+
+  const isDirector = role === 'director'
 
   return (
     <div className="space-y-6">
@@ -22,29 +25,18 @@ export default async function EnseignantsPage() {
               <th className="px-4 py-3 font-medium">Nom</th>
               <th className="px-4 py-3 font-medium">Téléphone</th>
               <th className="px-4 py-3 font-medium">Email</th>
+              <th className="px-4 py-3 font-medium">Rôle</th>
               <th className="px-4 py-3 font-medium">Statut</th>
+              {isDirector && <th className="px-4 py-3 font-medium text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {(teachers ?? []).map((t) => (
-              <tr key={t.id}>
-                <td className="px-4 py-3 text-gray-900 font-medium">{t.name}</td>
-                <td className="px-4 py-3 text-gray-600">{t.phone ?? '—'}</td>
-                <td className="px-4 py-3 text-gray-600">{t.email ?? '—'}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      t.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-                    }`}
-                  >
-                    {t.is_active ? 'Actif' : 'Inactif'}
-                  </span>
-                </td>
-              </tr>
+              <TeacherRow key={t.id} teacher={t} canManage={isDirector} />
             ))}
             {(teachers ?? []).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={isDirector ? 6 : 5} className="px-4 py-8 text-center text-gray-400">
                   Aucun enseignant enregistré.
                 </td>
               </tr>
@@ -52,6 +44,8 @@ export default async function EnseignantsPage() {
           </tbody>
         </table>
       </div>
+
+      {isDirector && <InviteTeacherForm />}
     </div>
   )
 }

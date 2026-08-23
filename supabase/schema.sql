@@ -62,6 +62,8 @@ CREATE TABLE teachers (
   name TEXT NOT NULL,
   phone TEXT,
   email TEXT,
+  role TEXT NOT NULL DEFAULT 'teacher'
+    CHECK (role IN ('director','teacher')),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -177,12 +179,13 @@ BEGIN
     )
     RETURNING id INTO new_school_id;
 
-    INSERT INTO teachers (school_id, user_id, name, email)
+    INSERT INTO teachers (school_id, user_id, name, email, role)
     VALUES (
       new_school_id,
       NEW.id,
       NEW.raw_user_meta_data->>'director_name',
-      NEW.email
+      NEW.email,
+      'director'
     );
   END IF;
   RETURN NEW;
@@ -240,8 +243,36 @@ SECURITY DEFINER
 SET search_path = public
 STABLE
 AS $$
-  SELECT school_id FROM teachers WHERE user_id = auth.uid() LIMIT 1;
+  SELECT school_id FROM teachers WHERE user_id = auth.uid() AND is_active = true LIMIT 1;
 $$;
+
+-- Résout le rôle du compte connecté ('director' / 'teacher'). Utilisée par
+-- l'application pour adapter navigation et accès, et par le garde-fou
+-- ci-dessous pour empêcher l'auto-élévation de privilège.
+CREATE OR REPLACE FUNCTION current_teacher_role()
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT role FROM teachers WHERE user_id = auth.uid() AND is_active = true LIMIT 1;
+$$;
+
+-- La RLS de `teachers` n'isole qu'au niveau école : sans ce garde-fou, un
+-- compte enseignant pourrait s'auto-promouvoir directeur (ou réactiver un
+-- collègue désactivé) via un appel REST direct qui contourne les Server
+-- Actions applicatives.
+CREATE OR REPLACE FUNCTION guard_teacher_privileged_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (NEW.role IS DISTINCT FROM OLD.role OR NEW.is_active IS DISTINCT FROM OLD.is_active)
+     AND COALESCE(current_teacher_role(), '') <> 'director' THEN
+    RAISE EXCEPTION 'Seul un directeur peut modifier le rôle ou le statut du personnel.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE POLICY "School isolation: schools"
   ON schools FOR ALL TO authenticated
@@ -283,3 +314,8 @@ CREATE POLICY "School isolation: absences"
   ON absences FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
+
+CREATE TRIGGER teachers_privileged_fields_guard
+  BEFORE UPDATE ON teachers
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_teacher_privileged_fields();

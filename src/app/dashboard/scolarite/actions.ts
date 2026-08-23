@@ -3,10 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 
 export async function recordPayment(_prevState: unknown, formData: FormData) {
-  const { school, user, schoolYear } = await getCurrentSchool()
+  const { school, user, schoolYear } = await requireDirector()
   const supabase = await createClient()
 
   const studentId = formData.get('studentId') as string

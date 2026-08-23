@@ -21,8 +21,9 @@ export default async function FicheElevePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { school } = await getCurrentSchool()
+  const { school, role } = await getCurrentSchool()
   const supabase = await createClient()
+  const isDirector = role === 'director'
 
   const { data: student } = await supabase
     .from('students')
@@ -75,15 +76,17 @@ export default async function FicheElevePage({
             {student.registration_number} · {(student.classes as { name: string } | null)?.name ?? 'Sans classe'}
           </p>
         </div>
-        <Link
-          href={`/dashboard/scolarite/paiement?eleve=${student.id}`}
-          className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors w-fit"
-        >
-          <Plus className="w-4 h-4" /> Enregistrer paiement
-        </Link>
+        {isDirector && (
+          <Link
+            href={`/dashboard/scolarite/paiement?eleve=${student.id}`}
+            className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors w-fit"
+          >
+            <Plus className="w-4 h-4" /> Enregistrer paiement
+          </Link>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${isDirector ? 'lg:grid-cols-3' : ''}`}>
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h2 className="font-semibold text-gray-900">Informations</h2>
           <dl className="text-sm space-y-2">
@@ -114,6 +117,7 @@ export default async function FicheElevePage({
           </dl>
         </div>
 
+        {isDirector && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900">Historique des paiements</h2>
@@ -146,6 +150,7 @@ export default async function FicheElevePage({
             </table>
           )}
         </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

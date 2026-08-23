@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -15,7 +15,7 @@ export default async function ScolaritePage({
   searchParams: Promise<{ classe?: string; statut?: string }>
 }) {
   const { classe, statut } = await searchParams
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
 
   const [{ data: classes }, { data: students }, { data: feeStructures }, { data: payments }] =

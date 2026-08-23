@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 import { ReceiptDocument } from '@/lib/pdf/receipt-document'
 
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const { school } = await getCurrentSchool()
+  const { school } = await requireDirector()
   const supabase = await createClient()
 
   const { data: payment } = await supabase

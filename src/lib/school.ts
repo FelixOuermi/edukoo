@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
+export type TeacherRole = 'director' | 'teacher'
+
 export async function getCurrentSchool() {
   const supabase = await createClient()
 
@@ -12,7 +14,7 @@ export async function getCurrentSchool() {
 
   const { data: teacher } = await supabase
     .from('teachers')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .single()
 
@@ -33,5 +35,11 @@ export async function getCurrentSchool() {
     .eq('is_current', true)
     .maybeSingle()
 
-  return { user, school, schoolYear }
+  return { user, school, schoolYear, role: teacher.role as TeacherRole }
+}
+
+export async function requireDirector() {
+  const result = await getCurrentSchool()
+  if (result.role !== 'director') redirect('/dashboard')
+  return result
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentSchool } from '@/lib/school'
+import { requireDirector } from '@/lib/school'
 import { PaymentForm } from './payment-form'
 
 export default async function PaiementPage({
@@ -10,7 +10,7 @@ export default async function PaiementPage({
   searchParams: Promise<{ eleve?: string }>
 }) {
   const { eleve } = await searchParams
-  const { school } = await getCurrentSchool()
+  const { school } = await requireDirector()
   const supabase = await createClient()
 
   const { data: students } = await supabase
