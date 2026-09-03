@@ -2,6 +2,7 @@ import { GraduationCap } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 import { getCurrentParent } from '@/lib/portal'
 import { getDictionary } from '@/lib/i18n'
+import { OfflineBanner } from '@/components/offline-banner'
 
 export default async function EspaceParentLayout({ children }: { children: React.ReactNode }) {
   const { school, parent } = await getCurrentParent()
@@ -9,6 +10,7 @@ export default async function EspaceParentLayout({ children }: { children: React
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <OfflineBanner message={t.common.offlineMessage} />
       <header className="bg-[#4c1d95] text-white">
         <div className="max-w-4xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">

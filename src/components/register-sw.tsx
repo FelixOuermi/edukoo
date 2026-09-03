@@ -3,9 +3,10 @@
 import { useEffect } from 'react'
 
 /**
- * Enregistre le service worker (voir public/sw.js — volontairement sans
- * cache) pour satisfaire les critères d'installabilité PWA. Rendu côté
- * client uniquement : ne doit jamais bloquer ni ralentir le rendu serveur.
+ * Enregistre le service worker (voir public/sw.js — cache réseau-d'abord
+ * des pages déjà visitées pour un secours hors-ligne en lecture seule).
+ * Rendu côté client uniquement : ne doit jamais bloquer ni ralentir le
+ * rendu serveur.
  */
 export function RegisterServiceWorker() {
   useEffect(() => {

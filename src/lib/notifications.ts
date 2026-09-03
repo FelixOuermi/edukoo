@@ -1,6 +1,7 @@
 import 'server-only'
 import type { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { sendSms } from '@/lib/sms'
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
 
@@ -9,6 +10,13 @@ async function parentEmailsForStudent(supabase: SupabaseClient, studentId: strin
   return (data ?? [])
     .map((r) => (r.parents as unknown as { email: string | null } | null)?.email)
     .filter((e): e is string => !!e)
+}
+
+async function parentPhonesForStudent(supabase: SupabaseClient, studentId: string): Promise<string[]> {
+  const { data } = await supabase.from('parent_students').select('parents(phone)').eq('student_id', studentId)
+  return (data ?? [])
+    .map((r) => (r.parents as unknown as { phone: string | null } | null)?.phone)
+    .filter((p): p is string => !!p)
 }
 
 export async function notifyGradesRecorded(
@@ -40,17 +48,26 @@ export async function notifyAbsenceRecorded(
   date: string,
   justified: boolean
 ) {
-  const emails = await parentEmailsForStudent(supabase, studentId)
-  if (emails.length === 0) return
-  await Promise.all(
-    emails.map((to) =>
+  const [emails, phones] = await Promise.all([
+    parentEmailsForStudent(supabase, studentId),
+    parentPhonesForStudent(supabase, studentId),
+  ])
+  const justifiedText = justified ? 'justifiée' : 'non justifiée'
+  await Promise.all([
+    ...emails.map((to) =>
       sendEmail({
         to,
         subject: `Absence enregistrée — ${studentName}`,
-        html: `<p>Une absence ${justified ? 'justifiée' : 'non justifiée'} a été enregistrée pour <strong>${studentName}</strong> le ${date}.</p>`,
+        html: `<p>Une absence ${justifiedText} a été enregistrée pour <strong>${studentName}</strong> le ${date}.</p>`,
       })
-    )
-  )
+    ),
+    // SMS envoyé en complément de l'email : certains parents n'ont ni email
+    // ni WhatsApp actif, mais un téléphone qui reçoit des SMS reste presque
+    // toujours joignable, y compris en zone de connectivité limitée.
+    ...phones.map((to) =>
+      sendSms({ to, body: `Edukoo : absence ${justifiedText} de ${studentName} le ${date}.` })
+    ),
+  ])
 }
 
 export async function notifyAbsenceThreshold(
@@ -60,17 +77,25 @@ export async function notifyAbsenceThreshold(
   count: number,
   threshold: number
 ) {
-  const emails = await parentEmailsForStudent(supabase, studentId)
-  if (emails.length === 0) return
-  await Promise.all(
-    emails.map((to) =>
+  const [emails, phones] = await Promise.all([
+    parentEmailsForStudent(supabase, studentId),
+    parentPhonesForStudent(supabase, studentId),
+  ])
+  await Promise.all([
+    ...emails.map((to) =>
       sendEmail({
         to,
         subject: `Seuil d’absences atteint — ${studentName}`,
         html: `<p><strong>${studentName}</strong> a atteint <strong>${count}</strong> absence(s) ce mois-ci (seuil fixé par l’école : ${threshold}). N’hésitez pas à contacter l’établissement.</p>`,
       })
-    )
-  )
+    ),
+    ...phones.map((to) =>
+      sendSms({
+        to,
+        body: `Edukoo : ${studentName} a atteint ${count} absence(s) ce mois-ci (seuil : ${threshold}). Merci de contacter l'école.`,
+      })
+    ),
+  ])
 }
 
 export async function notifyPaymentReceived(

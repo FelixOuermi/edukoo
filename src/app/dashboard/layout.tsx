@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { Sidebar, MobileNav } from '@/components/sidebar'
+import { OfflineBanner } from '@/components/offline-banner'
 import { getCurrentSchool } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 
 export default async function DashboardLayout({
   children,
@@ -47,6 +49,7 @@ export default async function DashboardLayout({
       <Sidebar schoolName={school.name} role={role} />
       <MobileNav role={role} />
       <main className="md:pl-64 pb-20 md:pb-0">
+        <OfflineBanner message={getDictionary().common.offlineMessage} />
         {isTrial && (
           <div className="bg-violet-100 border-b border-violet-200 px-4 py-3">
             <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">

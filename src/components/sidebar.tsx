@@ -20,6 +20,7 @@ import {
   NotebookPen,
   Bus,
   DoorOpen,
+  HelpCircle,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 import type { TeacherRole } from '@/lib/school'
@@ -110,6 +111,18 @@ export function Sidebar({ schoolName, role }: { schoolName: string; role: Teache
           </Link>
         </div>
       )}
+
+      <div className="px-3 pt-2">
+        <Link
+          href="/guide"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-violet-200 hover:bg-white/10 hover:text-white transition-colors"
+        >
+          <HelpCircle className="w-[18px] h-[18px]" />
+          {t.nav.guide}
+        </Link>
+      </div>
 
       <form action={signOut} className="px-3 py-4">
         <button

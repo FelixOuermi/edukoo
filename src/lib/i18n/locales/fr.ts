@@ -29,6 +29,8 @@ const fr = {
     back: 'Retour',
     logout: 'Déconnexion',
     goToSettings: 'Aller dans Paramètres',
+    offlineMessage:
+      "Hors connexion — vous consultez une version enregistrée, peut-être pas à jour. Rien ne sera enregistré tant que la connexion n'est pas rétablie.",
   },
   errors: {
     studentEmailRequired: 'Élève, nom et email sont requis.',
@@ -123,6 +125,7 @@ const fr = {
     settings: 'Paramètres',
     settingsShort: 'Réglages',
     upgrade: 'Passer au plan payant',
+    guide: "Guide d'utilisation",
   },
   auth: {
     login: {

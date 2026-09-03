@@ -15,6 +15,9 @@ export function MarketingFooter() {
           <Link href="/faq" className="text-sm text-gray-500 hover:text-[#7c3aed] font-medium">
             FAQ
           </Link>
+          <Link href="/guide" className="text-sm text-gray-500 hover:text-[#7c3aed] font-medium">
+            Guide
+          </Link>
           <Link href="/confidentialite" className="text-sm text-gray-500 hover:text-[#7c3aed] font-medium">
             Confidentialité
           </Link>
