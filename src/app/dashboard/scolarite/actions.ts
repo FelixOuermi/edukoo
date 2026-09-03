@@ -2,13 +2,17 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
 import { logAction } from '@/lib/audit-log'
+import { notifyPaymentReceived } from '@/lib/notifications'
+import { getDictionary } from '@/lib/i18n'
 
 export async function recordPayment(_prevState: unknown, formData: FormData) {
   const { school, user, schoolYear, teacherName: actorName } = await requireDirector()
   const supabase = await createClient()
+  const t = getDictionary().errors
 
   const studentId = formData.get('studentId') as string
   const amount = Number(formData.get('amount'))
@@ -16,8 +20,8 @@ export async function recordPayment(_prevState: unknown, formData: FormData) {
   const paymentMethod = formData.get('paymentMethod') as string
   const paidAt = formData.get('paidAt') as string
 
-  if (!studentId) return { error: 'Veuillez sélectionner un élève.' }
-  if (!amount || amount <= 0) return { error: 'Montant invalide.' }
+  if (!studentId) return { error: t.selectStudent }
+  if (!amount || amount <= 0) return { error: t.invalidAmount }
 
   const { data: student } = await supabase
     .from('students')
@@ -26,7 +30,7 @@ export async function recordPayment(_prevState: unknown, formData: FormData) {
     .eq('school_id', school.id)
     .maybeSingle()
 
-  if (!student) return { error: 'Élève introuvable.' }
+  if (!student) return { error: t.studentNotFound }
 
   let feeStructureId: string | null = null
   if (student?.class_id && schoolYear) {
@@ -62,6 +66,16 @@ export async function recordPayment(_prevState: unknown, formData: FormData) {
     actorName,
     'Paiement enregistré',
     `${amount.toLocaleString('fr-FR')} FCFA pour ${student.first_name} ${student.last_name} (${paymentMethod})`
+  )
+
+  after(() =>
+    notifyPaymentReceived(
+      supabase,
+      studentId,
+      `${student.first_name} ${student.last_name}`,
+      amount,
+      payment.receipt_number ?? null
+    )
   )
 
   revalidatePath('/dashboard/scolarite')

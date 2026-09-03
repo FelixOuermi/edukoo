@@ -2,6 +2,10 @@
 
 import { useActionState, useRef, useState, useTransition } from 'react'
 import { updateSchoolInfo, createSchoolYear, upsertFeeStructure, setCurrentSchoolYear, uploadSchoolLogo, createPeriod, deletePeriod } from './actions'
+import { getDictionary } from '@/lib/i18n'
+
+const dict = getDictionary()
+const t = dict.settingsPage
 
 interface School {
   name: string
@@ -12,6 +16,7 @@ interface School {
   orange_money: string | null
   moov_money: string | null
   whatsapp: string | null
+  absence_alert_threshold: number
 }
 
 export function SchoolInfoForm({ school }: { school: School }) {
@@ -19,10 +24,10 @@ export function SchoolInfoForm({ school }: { school: School }) {
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
-      <h2 className="font-semibold text-gray-900">Informations de l&apos;école</h2>
+      <h2 className="font-semibold text-gray-900">{t.schoolInfoTitle}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nom de l&apos;école</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.schoolName}</label>
           <input
             type="text"
             name="name"
@@ -32,7 +37,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Directeur</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.director}</label>
           <input
             type="text"
             name="directorName"
@@ -41,7 +46,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.address}</label>
           <input
             type="text"
             name="address"
@@ -50,7 +55,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.phone}</label>
           <input
             type="text"
             name="phone"
@@ -59,7 +64,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">NIF</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.nif}</label>
           <input
             type="text"
             name="nif"
@@ -68,7 +73,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp école</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.whatsappSchool}</label>
           <input
             type="text"
             name="whatsapp"
@@ -78,7 +83,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Numéro Orange Money</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.orangeMoneyNumber}</label>
           <input
             type="text"
             name="orangeMoney"
@@ -87,7 +92,7 @@ export function SchoolInfoForm({ school }: { school: School }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Numéro Moov Money</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.moovMoneyNumber}</label>
           <input
             type="text"
             name="moovMoney"
@@ -95,15 +100,30 @@ export function SchoolInfoForm({ school }: { school: School }) {
             className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t.absenceThresholdLabel}
+          </label>
+          <input
+            type="number"
+            name="absenceAlertThreshold"
+            min={1}
+            defaultValue={school.absence_alert_threshold}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+          />
+          <p className="text-[11px] text-gray-400 mt-1">
+            {t.absenceThresholdHint}
+          </p>
+        </div>
       </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state?.success && <p className="text-sm text-emerald-600">Enregistré.</p>}
+      {state?.success && <p className="text-sm text-emerald-600">{t.saved}</p>}
       <button
         type="submit"
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Enregistrement...' : 'Enregistrer'}
+        {pending ? t.saving : dict.common.save}
       </button>
     </form>
   )
@@ -119,7 +139,7 @@ export function ActivateSchoolYearButton({ id }: { id: string }) {
       onClick={() => startTransition(async () => { await setCurrentSchoolYear(id) })}
       className="text-xs font-medium text-[#7c3aed] hover:underline disabled:opacity-50"
     >
-      {pending ? 'Activation...' : 'Activer'}
+      {pending ? t.activating : t.activate}
     </button>
   )
 }
@@ -129,12 +149,12 @@ export function SchoolYearForm() {
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-      <h2 className="font-semibold text-gray-900">Nouvelle année scolaire</h2>
+      <h2 className="font-semibold text-gray-900">{t.newSchoolYear}</h2>
       <input
         type="text"
         name="name"
         required
-        placeholder="Ex : 2026-2027"
+        placeholder={t.schoolYearNamePlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       <div className="grid grid-cols-2 gap-3">
@@ -157,7 +177,7 @@ export function SchoolYearForm() {
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Création...' : 'Créer et activer'}
+        {pending ? t.creating : t.createAndActivate}
       </button>
     </form>
   )
@@ -168,13 +188,13 @@ export function FeeStructureForm({ classes }: { classes: { id: string; name: str
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-      <h2 className="font-semibold text-gray-900">Grille tarifaire</h2>
+      <h2 className="font-semibold text-gray-900">{t.feeStructureTitle}</h2>
       <select
         name="classId"
         required
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       >
-        <option value="">— Sélectionner une classe —</option>
+        <option value="">{t.selectClassPlaceholder}</option>
         {classes.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -186,7 +206,7 @@ export function FeeStructureForm({ classes }: { classes: { id: string; name: str
         name="totalAmount"
         min={1}
         required
-        placeholder="Montant annuel (FCFA)"
+        placeholder={t.annualAmountPlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       <input
@@ -194,17 +214,17 @@ export function FeeStructureForm({ classes }: { classes: { id: string; name: str
         name="installments"
         defaultValue={3}
         min={1}
-        placeholder="Nombre de tranches"
+        placeholder={t.installmentsCountPlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
-      {state?.success && <p className="text-xs text-emerald-600">Grille enregistrée.</p>}
+      {state?.success && <p className="text-xs text-emerald-600">{t.feeStructureSaved}</p>}
       <button
         type="submit"
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Enregistrement...' : 'Enregistrer la grille'}
+        {pending ? t.saving : t.saveFeeStructure}
       </button>
     </form>
   )
@@ -224,19 +244,19 @@ export function LogoUploadForm({ currentLogoUrl }: { currentLogoUrl: string | nu
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
-      <h2 className="font-semibold text-gray-900">Logo de l&apos;école</h2>
+      <h2 className="font-semibold text-gray-900">{t.schoolLogoTitle}</h2>
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Logo de l'école" className="w-full h-full object-contain" />
+            <img src={preview} alt={t.schoolLogoTitle} className="w-full h-full object-contain" />
           ) : (
-            <span className="text-[10px] text-gray-400 text-center px-1">Aucun logo</span>
+            <span className="text-[10px] text-gray-400 text-center px-1">{t.noLogo}</span>
           )}
         </div>
         <form ref={formRef} action={formAction} className="flex-1 space-y-2">
           <label className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg cursor-pointer text-gray-700">
-            {pending ? 'Envoi...' : 'Choisir une image'}
+            {pending ? t.sending : t.chooseImage}
             <input
               type="file"
               name="file"
@@ -246,9 +266,9 @@ export function LogoUploadForm({ currentLogoUrl }: { currentLogoUrl: string | nu
               onChange={(e) => e.target.files?.length && e.target.form?.requestSubmit()}
             />
           </label>
-          <p className="text-[11px] text-gray-400">PNG, JPEG, WebP ou SVG — 2 Mo maximum. Utilisé sur les bulletins et reçus PDF.</p>
+          <p className="text-[11px] text-gray-400">{t.logoHint}</p>
           {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
-          {state?.success && <p className="text-xs text-emerald-600">Logo mis à jour.</p>}
+          {state?.success && <p className="text-xs text-emerald-600">{t.logoUpdated}</p>}
         </form>
       </div>
     </div>
@@ -260,7 +280,7 @@ export function PeriodForm({ nextNumber }: { nextNumber: number }) {
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-      <h2 className="font-semibold text-gray-900">Ajouter une période</h2>
+      <h2 className="font-semibold text-gray-900">{t.addPeriod}</h2>
       <div className="grid grid-cols-2 gap-3">
         <input
           type="number"
@@ -268,14 +288,14 @@ export function PeriodForm({ nextNumber }: { nextNumber: number }) {
           defaultValue={nextNumber}
           min={1}
           max={6}
-          placeholder="N°"
+          placeholder={t.numberPlaceholder}
           className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         />
         <input
           type="text"
           name="name"
           required
-          placeholder="Ex : Trimestre 1"
+          placeholder={t.periodNamePlaceholder}
           className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         />
       </div>
@@ -299,7 +319,7 @@ export function PeriodForm({ nextNumber }: { nextNumber: number }) {
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Ajout...' : 'Ajouter / mettre à jour'}
+        {pending ? t.adding : t.addOrUpdate}
       </button>
     </form>
   )
@@ -323,7 +343,7 @@ export function DeletePeriodButton({ id }: { id: string }) {
         }
         className="text-xs text-gray-400 hover:text-rose-600 disabled:opacity-50"
       >
-        Supprimer
+        {dict.common.delete}
       </button>
       {error && <p className="text-[11px] text-rose-600 mt-1">{error}</p>}
     </div>

@@ -2,8 +2,11 @@
 
 import * as XLSX from 'xlsx'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { notifyGradesRecorded } from '@/lib/notifications'
+import { getDictionary } from '@/lib/i18n'
 
 async function assertTeacherAssigned(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -26,8 +29,10 @@ async function assertTeacherAssigned(
 export async function saveGrades(_prevState: unknown, formData: FormData) {
   const { school, schoolYear, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
+  const dict = getDictionary()
+  const t = dict.errors
 
-  if (!schoolYear) return { error: 'Aucune année scolaire active. Configurez-la dans Paramètres.' }
+  if (!schoolYear) return { error: t.noActiveSchoolYearSettings }
 
   const classId = formData.get('classId') as string
   const subjectId = formData.get('subjectId') as string
@@ -36,25 +41,27 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
   const gradeTypeIds = formData.getAll('gradeTypeId') as string[]
 
   if (!classId || !subjectId || !trimester) {
-    return { error: 'Classe, matière et trimestre sont requis.' }
+    return { error: t.classSubjectTrimesterRequired }
   }
 
   if (!(await assertTeacherAssigned(supabase, role, teacherId, classId, subjectId))) {
-    return { error: "Vous n'êtes pas affecté à cette classe/matière." }
+    return { error: t.notAssignedToClassSubject }
   }
 
   const [{ data: klass }, { data: subject }, { data: validStudents }, { data: validGradeTypes }] =
     await Promise.all([
       supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
-      supabase.from('subjects').select('id').eq('id', subjectId).eq('school_id', school.id).maybeSingle(),
-      supabase.from('students').select('id').eq('class_id', classId).eq('school_id', school.id),
-      supabase.from('grade_types').select('id').eq('school_id', school.id).in('id', gradeTypeIds),
+      supabase.from('subjects').select('id, name').eq('id', subjectId).eq('school_id', school.id).maybeSingle(),
+      supabase.from('students').select('id, first_name, last_name').eq('class_id', classId).eq('school_id', school.id),
+      supabase.from('grade_types').select('id, name').eq('school_id', school.id).in('id', gradeTypeIds),
     ])
 
-  if (!klass || !subject) return { error: 'Classe ou matière introuvable.' }
+  if (!klass || !subject) return { error: t.classOrSubjectNotFound }
 
   const validStudentIds = new Set((validStudents ?? []).map((s) => s.id))
   const validGradeTypeIds = new Set((validGradeTypes ?? []).map((g) => g.id))
+  const studentNameById = new Map((validStudents ?? []).map((s) => [s.id, `${s.first_name} ${s.last_name}`]))
+  const gradeTypeNameById = new Map((validGradeTypes ?? []).map((g) => [g.id, g.name]))
 
   const rows: {
     school_id: string
@@ -90,13 +97,31 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
     }
   }
 
-  if (rows.length === 0) return { error: 'Aucune note à enregistrer.' }
+  if (rows.length === 0) return { error: t.noGradesToSave }
 
   const { error } = await supabase
     .from('grades')
     .upsert(rows, { onConflict: 'student_id,subject_id,school_year_id,trimester,grade_type_id' })
 
   if (error) return { error: error.message }
+
+  const entriesByStudent = new Map<string, { gradeTypeName: string; score: number; maxScore: number }[]>()
+  for (const row of rows) {
+    const list = entriesByStudent.get(row.student_id) ?? []
+    list.push({
+      gradeTypeName: gradeTypeNameById.get(row.grade_type_id) ?? '—',
+      score: row.score,
+      maxScore: row.max_score,
+    })
+    entriesByStudent.set(row.student_id, list)
+  }
+  after(async () => {
+    await Promise.all(
+      Array.from(entriesByStudent.entries()).map(([studentId, entries]) =>
+        notifyGradesRecorded(supabase, studentId, studentNameById.get(studentId) ?? dict.dashboardHome.student, subject.name, entries)
+      )
+    )
+  })
 
   revalidatePath('/dashboard/notes')
   revalidatePath('/dashboard/bulletins')
@@ -113,19 +138,20 @@ interface ExcelGradeRow {
 export async function importGradesFromExcel(formData: FormData) {
   const { school, schoolYear, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
+  const t = getDictionary().errors
 
-  if (!schoolYear) return { error: 'Aucune année scolaire active. Configurez-la dans Paramètres.' }
+  if (!schoolYear) return { error: t.noActiveSchoolYearSettings }
 
   const classId = formData.get('classId') as string
   const subjectId = formData.get('subjectId') as string
   const trimester = Number(formData.get('trimester'))
   const file = formData.get('file') as File | null
 
-  if (!classId || !subjectId || !trimester) return { error: 'Classe, matière et trimestre sont requis.' }
-  if (!file) return { error: 'Aucun fichier fourni.' }
+  if (!classId || !subjectId || !trimester) return { error: t.classSubjectTrimesterRequired }
+  if (!file) return { error: t.noFileProvided }
 
   if (!(await assertTeacherAssigned(supabase, role, teacherId, classId, subjectId))) {
-    return { error: "Vous n'êtes pas affecté à cette classe/matière." }
+    return { error: t.notAssignedToClassSubject }
   }
 
   const [{ data: klass }, { data: subject }, { data: students }, { data: gradeTypes }] = await Promise.all([
@@ -135,8 +161,8 @@ export async function importGradesFromExcel(formData: FormData) {
     supabase.from('grade_types').select('id, name').eq('school_id', school.id),
   ])
 
-  if (!klass || !subject) return { error: 'Classe ou matière introuvable.' }
-  if (!gradeTypes || gradeTypes.length === 0) return { error: 'Aucun type de note configuré.' }
+  if (!klass || !subject) return { error: t.classOrSubjectNotFound }
+  if (!gradeTypes || gradeTypes.length === 0) return { error: t.noGradeTypesConfiguredShort }
 
   const studentByRegistration = new Map((students ?? []).filter((s) => s.registration_number).map((s) => [s.registration_number!.trim().toLowerCase(), s.id]))
   const studentByFullName = new Map((students ?? []).map((s) => [`${s.first_name} ${s.last_name}`.trim().toLowerCase(), s.id]))
@@ -196,7 +222,7 @@ export async function importGradesFromExcel(formData: FormData) {
   }
 
   if (rows.length === 0) {
-    return { error: `Aucune note valide trouvée. Colonnes attendues : Matricule (ou Nom+Prenom), puis une colonne par type de note (${gradeTypes.map((g) => g.name).join(', ')}).` }
+    return { error: t.noValidGradesFoundTemplate.replace('{names}', gradeTypes.map((g) => g.name).join(', ')) }
   }
 
   const { error } = await supabase
@@ -204,6 +230,11 @@ export async function importGradesFromExcel(formData: FormData) {
     .upsert(rows, { onConflict: 'student_id,subject_id,school_year_id,trimester,grade_type_id' })
 
   if (error) return { error: error.message }
+
+  // Pas de notification email ici (contrairement à saveGrades) : un import
+  // Excel porte souvent sur un lot de notes déjà communiquées autrement
+  // (ou une reprise de données historiques), pas un événement "nouvelle
+  // note" à signaler en temps réel à chaque parent.
 
   revalidatePath('/dashboard/notes')
   revalidatePath('/dashboard/bulletins')

@@ -2,6 +2,10 @@
 
 import { useActionState, useMemo, useState } from 'react'
 import { recordPayment } from '../actions'
+import { getDictionary } from '@/lib/i18n'
+
+const dict = getDictionary()
+const t = dict.tuitionPage
 
 interface StudentOption {
   id: string
@@ -39,7 +43,7 @@ export function PaymentForm({
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5 max-w-lg">
       <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Élève</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t.tableStudent}</label>
         <input
           type="text"
           value={query}
@@ -49,7 +53,7 @@ export function PaymentForm({
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Rechercher par nom ou matricule..."
+          placeholder={t.searchPlaceholder}
           className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           autoComplete="off"
         />
@@ -77,25 +81,25 @@ export function PaymentForm({
           </ul>
         )}
         {!selected && query && (
-          <p className="text-xs text-amber-600 mt-1">Sélectionnez un élève dans la liste.</p>
+          <p className="text-xs text-amber-600 mt-1">{t.selectFromList}</p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tranche</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.installment}</label>
           <select
             name="installmentNumber"
             defaultValue="1"
             className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           >
-            <option value="1">1ère tranche</option>
-            <option value="2">2ème tranche</option>
-            <option value="3">3ème tranche</option>
+            <option value="1">{t.installment1}</option>
+            <option value="2">{t.installment2}</option>
+            <option value="3">{t.installment3}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Montant (FCFA)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.amountFcfa}</label>
           <input
             type="number"
             name="amount"
@@ -108,20 +112,20 @@ export function PaymentForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mode de paiement</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.paymentMethod}</label>
           <select
             name="paymentMethod"
             defaultValue="cash"
             className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           >
-            <option value="cash">Espèces</option>
-            <option value="orange_money">Orange Money</option>
-            <option value="moov_money">Moov Money</option>
-            <option value="transfer">Virement</option>
+            <option value="cash">{dict.paymentMethods.cash}</option>
+            <option value="orange_money">{dict.paymentMethods.orange_money}</option>
+            <option value="moov_money">{dict.paymentMethods.moov_money}</option>
+            <option value="transfer">{dict.paymentMethods.transfer}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.date}</label>
           <input
             type="date"
             name="paidAt"
@@ -142,7 +146,7 @@ export function PaymentForm({
         disabled={pending || !selected}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Enregistrement...' : 'Enregistrer le paiement et générer le reçu'}
+        {pending ? t.saving : t.saveAndGenerateReceipt}
       </button>
     </form>
   )

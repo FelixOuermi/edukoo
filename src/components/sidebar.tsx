@@ -9,33 +9,48 @@ import {
   Wallet,
   ClipboardList,
   CalendarX,
+  CalendarDays,
   Users,
   Settings,
   LogOut,
   Star,
   ScrollText,
+  Megaphone,
+  BarChart3,
+  NotebookPen,
+  Bus,
+  DoorOpen,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 import type { TeacherRole } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
+
+const t = getDictionary()
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, directorOnly: false },
-  { href: '/dashboard/eleves', label: 'Élèves', icon: GraduationCap, directorOnly: false },
-  { href: '/dashboard/classes', label: 'Classes', icon: BookOpen, directorOnly: false },
-  { href: '/dashboard/scolarite', label: 'Scolarité & Paiements', icon: Wallet, directorOnly: true },
-  { href: '/dashboard/bulletins', label: 'Notes & Bulletins', icon: ClipboardList, directorOnly: false },
-  { href: '/dashboard/absences', label: 'Absences', icon: CalendarX, directorOnly: false },
-  { href: '/dashboard/enseignants', label: 'Enseignants', icon: Users, directorOnly: false },
-  { href: '/dashboard/journal', label: "Journal d'audit", icon: ScrollText, directorOnly: true },
-  { href: '/dashboard/parametres', label: 'Paramètres', icon: Settings, directorOnly: true },
+  { href: '/dashboard', label: t.nav.dashboard, icon: LayoutDashboard, directorOnly: false },
+  { href: '/dashboard/eleves', label: t.nav.students, icon: GraduationCap, directorOnly: false },
+  { href: '/dashboard/classes', label: t.nav.classes, icon: BookOpen, directorOnly: false },
+  { href: '/dashboard/scolarite', label: t.nav.tuition, icon: Wallet, directorOnly: true },
+  { href: '/dashboard/services', label: t.nav.services, icon: Bus, directorOnly: true },
+  { href: '/dashboard/bulletins', label: t.nav.grades, icon: ClipboardList, directorOnly: false },
+  { href: '/dashboard/cahier-de-texte', label: t.nav.lessonLog, icon: NotebookPen, directorOnly: false },
+  { href: '/dashboard/statistiques', label: t.nav.statistics, icon: BarChart3, directorOnly: true },
+  { href: '/dashboard/absences', label: t.nav.absences, icon: CalendarX, directorOnly: false },
+  { href: '/dashboard/emploi-du-temps', label: t.nav.timetable, icon: CalendarDays, directorOnly: false },
+  { href: '/dashboard/salles', label: t.nav.rooms, icon: DoorOpen, directorOnly: false },
+  { href: '/dashboard/annonces', label: t.nav.announcements, icon: Megaphone, directorOnly: false },
+  { href: '/dashboard/enseignants', label: t.nav.teachers, icon: Users, directorOnly: false },
+  { href: '/dashboard/journal', label: t.nav.auditLog, icon: ScrollText, directorOnly: true },
+  { href: '/dashboard/parametres', label: t.nav.settings, icon: Settings, directorOnly: true },
 ]
 
 const MOBILE_ITEMS = [
-  { href: '/dashboard', label: 'Accueil', icon: LayoutDashboard, directorOnly: false },
-  { href: '/dashboard/eleves', label: 'Élèves', icon: GraduationCap, directorOnly: false },
-  { href: '/dashboard/scolarite', label: 'Scolarité', icon: Wallet, directorOnly: true },
-  { href: '/dashboard/absences', label: 'Absences', icon: CalendarX, directorOnly: false },
-  { href: '/dashboard/parametres', label: 'Réglages', icon: Settings, directorOnly: true },
+  { href: '/dashboard', label: t.nav.home, icon: LayoutDashboard, directorOnly: false },
+  { href: '/dashboard/eleves', label: t.nav.students, icon: GraduationCap, directorOnly: false },
+  { href: '/dashboard/scolarite', label: t.nav.tuitionShort, icon: Wallet, directorOnly: true },
+  { href: '/dashboard/absences', label: t.nav.absences, icon: CalendarX, directorOnly: false },
+  { href: '/dashboard/parametres', label: t.nav.settingsShort, icon: Settings, directorOnly: true },
 ]
 
 function isActive(pathname: string, href: string) {
@@ -91,7 +106,7 @@ export function Sidebar({ schoolName, role }: { schoolName: string; role: Teache
             }`}
           >
             <Star className="w-[18px] h-[18px]" />
-            Passer au plan payant
+            {t.nav.upgrade}
           </Link>
         </div>
       )}
@@ -102,7 +117,7 @@ export function Sidebar({ schoolName, role }: { schoolName: string; role: Teache
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-violet-200 hover:bg-white/10 hover:text-white w-full transition-colors"
         >
           <LogOut className="w-[18px] h-[18px]" />
-          Déconnexion
+          {t.common.logout}
         </button>
       </form>
     </aside>

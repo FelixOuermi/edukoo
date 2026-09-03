@@ -35,13 +35,19 @@ export async function computeClassBulletins({
   classId,
   schoolYearId,
   trimester,
+  supabase: providedClient,
 }: {
   schoolId: string
   classId: string
   schoolYearId: string
   trimester: number
+  // Un parent/élève n'a par RLS accès qu'à son propre enfant, jamais au
+  // reste de la classe : pour calculer un rang correct sur la classe
+  // entière depuis leur portail, l'appelant doit fournir un client admin
+  // (service role) ici. Par défaut, client lié à la session courante.
+  supabase?: Awaited<ReturnType<typeof createClient>>
 }): Promise<{ className: string; bulletins: StudentBulletin[] }> {
-  const supabase = await createClient()
+  const supabase = providedClient ?? (await createClient())
 
   const { data: klass } = await supabase
     .from('classes')

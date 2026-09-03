@@ -5,20 +5,22 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentSchool, type TeacherRole } from '@/lib/school'
 import { logAction } from '@/lib/audit-log'
+import { getDictionary } from '@/lib/i18n'
 
 export async function inviteTeacher(_prevState: unknown, formData: FormData) {
   const { school, role: actorRole, teacherName: actorName } = await getCurrentSchool()
+  const t = getDictionary().errors
   if (actorRole !== 'director') {
-    return { error: 'Seul le directeur peut inviter un membre du personnel.' }
+    return { error: t.directorOnlyInviteStaff }
   }
 
   const name = (formData.get('name') as string)?.trim()
   const email = (formData.get('email') as string)?.trim().toLowerCase()
   const invitedRole = (formData.get('role') as string) || 'teacher'
 
-  if (!name || !email) return { error: 'Nom et email sont requis.' }
+  if (!name || !email) return { error: t.nameAndEmailRequired }
   if (invitedRole !== 'director' && invitedRole !== 'teacher') {
-    return { error: 'Rôle invalide.' }
+    return { error: t.invalidRole }
   }
 
   const supabase = await createClient()
@@ -30,7 +32,7 @@ export async function inviteTeacher(_prevState: unknown, formData: FormData) {
     .eq('email', email)
     .maybeSingle()
 
-  if (existing) return { error: 'Cette personne fait déjà partie de votre équipe.' }
+  if (existing) return { error: t.alreadyInTeam }
 
   const admin = createAdminClient()
   const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email)
@@ -61,7 +63,7 @@ export async function inviteTeacher(_prevState: unknown, formData: FormData) {
 export async function setTeacherActive(id: string, isActive: boolean) {
   const { school, role: actorRole, teacherName: actorName } = await getCurrentSchool()
   if (actorRole !== 'director') {
-    return { error: 'Seul le directeur peut modifier le statut du personnel.' }
+    return { error: getDictionary().errors.directorOnlyChangeStatus }
   }
 
   const supabase = await createClient()
@@ -82,8 +84,9 @@ export async function setTeacherActive(id: string, isActive: boolean) {
 
 export async function setTeacherRole(id: string, newRole: TeacherRole) {
   const { school, role: actorRole, user, teacherName: actorName } = await getCurrentSchool()
+  const t = getDictionary().errors
   if (actorRole !== 'director') {
-    return { error: 'Seul le directeur peut modifier les rôles.' }
+    return { error: t.directorOnlyChangeRoles }
   }
 
   const supabase = await createClient()
@@ -95,7 +98,7 @@ export async function setTeacherRole(id: string, newRole: TeacherRole) {
     .maybeSingle()
 
   if (target?.user_id === user.id && newRole !== 'director') {
-    return { error: 'Vous ne pouvez pas retirer votre propre rôle de directeur.' }
+    return { error: t.cannotRemoveOwnDirectorRole }
   }
 
   const { error } = await supabase
@@ -114,8 +117,9 @@ export async function setTeacherRole(id: string, newRole: TeacherRole) {
 
 export async function saveTeacherAssignments(_prevState: unknown, formData: FormData) {
   const { school, role: actorRole } = await getCurrentSchool()
+  const t = getDictionary().errors
   if (actorRole !== 'director') {
-    return { error: 'Seul le directeur peut affecter le personnel.' }
+    return { error: t.directorOnlyAssignStaff }
   }
 
   const supabase = await createClient()
@@ -123,7 +127,7 @@ export async function saveTeacherAssignments(_prevState: unknown, formData: Form
   const classId = formData.get('classId') as string
   const subjectIds = formData.getAll('subjectId') as string[]
 
-  if (!teacherId || !classId) return { error: 'Enseignant et classe sont requis.' }
+  if (!teacherId || !classId) return { error: t.teacherAndClassRequired }
 
   const [{ data: teacher }, { data: klass }, { data: validSubjects }] = await Promise.all([
     supabase.from('teachers').select('id').eq('id', teacherId).eq('school_id', school.id).maybeSingle(),
@@ -131,7 +135,7 @@ export async function saveTeacherAssignments(_prevState: unknown, formData: Form
     supabase.from('subjects').select('id').eq('school_id', school.id).in('id', subjectIds),
   ])
 
-  if (!teacher || !klass) return { error: 'Enseignant ou classe introuvable.' }
+  if (!teacher || !klass) return { error: t.teacherOrClassNotFound }
   const validSubjectIds = new Set((validSubjects ?? []).map((s) => s.id))
   const selectedSubjectIds = subjectIds.filter((id) => validSubjectIds.has(id))
 

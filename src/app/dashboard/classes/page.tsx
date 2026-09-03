@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 import { NewClassForm, NewSubjectForm, NewGradeTypeForm, DeleteGradeTypeButton, ClassCoefficientsForm } from './class-forms'
 
 export default async function ClassesPage({
@@ -10,6 +11,7 @@ export default async function ClassesPage({
   const { coefClasse } = await searchParams
   const { school, role } = await getCurrentSchool()
   const supabase = await createClient()
+  const t = getDictionary().classesPage
   const isDirector = role === 'director'
 
   const [{ data: classes }, { data: subjects }, { data: students }, { data: gradeTypes }] = await Promise.all([
@@ -37,7 +39,7 @@ export default async function ClassesPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Classes & Matières</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
@@ -45,9 +47,9 @@ export default async function ClassesPage({
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Classe</th>
-                  <th className="px-4 py-3 font-medium">Niveau</th>
-                  <th className="px-4 py-3 font-medium text-right">Effectif</th>
+                  <th className="px-4 py-3 font-medium">{t.tableClass}</th>
+                  <th className="px-4 py-3 font-medium">{t.tableLevel}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t.tableHeadcount}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -63,7 +65,7 @@ export default async function ClassesPage({
                 {(classes ?? []).length === 0 && (
                   <tr>
                     <td colSpan={3} className="px-4 py-8 text-center text-gray-400">
-                      Aucune classe créée.
+                      {t.noClasses}
                     </td>
                   </tr>
                 )}
@@ -78,8 +80,8 @@ export default async function ClassesPage({
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Matière</th>
-                  <th className="px-4 py-3 font-medium text-right">Coefficient</th>
+                  <th className="px-4 py-3 font-medium">{t.tableSubject}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t.tableCoefficient}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -92,7 +94,7 @@ export default async function ClassesPage({
                 {(subjects ?? []).length === 0 && (
                   <tr>
                     <td colSpan={2} className="px-4 py-8 text-center text-gray-400">
-                      Aucune matière créée.
+                      {t.noSubjects}
                     </td>
                   </tr>
                 )}
@@ -107,8 +109,8 @@ export default async function ClassesPage({
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Type de note</th>
-                  <th className="px-4 py-3 font-medium text-right">Poids</th>
+                  <th className="px-4 py-3 font-medium">{t.tableGradeType}</th>
+                  <th className="px-4 py-3 font-medium text-right">{t.tableWeight}</th>
                   {isDirector && <th className="px-4 py-3 font-medium text-right"></th>}
                 </tr>
               </thead>
@@ -127,7 +129,7 @@ export default async function ClassesPage({
                 {(gradeTypes ?? []).length === 0 && (
                   <tr>
                     <td colSpan={isDirector ? 3 : 2} className="px-4 py-8 text-center text-gray-400">
-                      Aucun type de note créé.
+                      {t.noGradeTypes}
                     </td>
                   </tr>
                 )}
@@ -141,7 +143,7 @@ export default async function ClassesPage({
       {isDirector && (classes ?? []).length > 0 && (subjects ?? []).length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <h2 className="font-semibold text-gray-900">Coefficients par classe</h2>
+            <h2 className="font-semibold text-gray-900">{t.coefficientsByClass}</h2>
             <form method="get" className="flex items-center gap-2">
               <select
                 name="coefClasse"
@@ -155,13 +157,11 @@ export default async function ClassesPage({
                 ))}
               </select>
               <button type="submit" className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800">
-                Afficher
+                {getDictionary().common.show}
               </button>
             </form>
           </div>
-          <p className="text-xs text-gray-400">
-            Laisse le coefficient global (colonne « Matières » ci-dessus) si cette classe n&apos;a pas besoin d&apos;une valeur différente.
-          </p>
+          <p className="text-xs text-gray-400">{t.coefficientsHint}</p>
           {selectedClassId && (
             <ClassCoefficientsForm
               key={selectedClassId}

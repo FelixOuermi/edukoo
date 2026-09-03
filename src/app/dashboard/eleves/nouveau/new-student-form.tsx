@@ -2,6 +2,9 @@
 
 import { useActionState } from 'react'
 import { createStudent } from '../actions'
+import { getDictionary } from '@/lib/i18n'
+
+const t = getDictionary().students
 
 export function NewStudentForm({ classes }: { classes: { id: string; name: string }[] }) {
   const [state, formAction, pending] = useActionState(createStudent, null)
@@ -10,7 +13,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.firstName}</label>
           <input
             type="text"
             name="firstName"
@@ -19,7 +22,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.lastName}</label>
           <input
             type="text"
             name="lastName"
@@ -28,7 +31,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.birthDate}</label>
           <input
             type="date"
             name="birthDate"
@@ -36,12 +39,12 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Classe</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.classLabel}</label>
           <select
             name="classId"
             className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           >
-            <option value="">— Sélectionner —</option>
+            <option value="">{t.selectPlaceholder}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -51,15 +54,13 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
         </div>
       </div>
 
-      <p className="text-xs text-gray-400">
-        Le numéro matricule sera généré automatiquement à l&apos;inscription.
-      </p>
+      <p className="text-xs text-gray-400">{t.registrationNumberNote}</p>
 
       <div className="border-t border-gray-100 pt-5">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">Parent / Tuteur</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-4">{t.parentSectionTitle}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom du parent</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.parentName}</label>
             <input
               type="text"
               name="parentName"
@@ -67,7 +68,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.phone}</label>
             <input
               type="tel"
               name="parentPhone"
@@ -76,7 +77,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.whatsapp}</label>
             <input
               type="tel"
               name="parentWhatsapp"
@@ -85,7 +86,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.email}</label>
             <input
               type="email"
               name="parentEmail"
@@ -106,7 +107,7 @@ export function NewStudentForm({ classes }: { classes: { id: string; name: strin
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Inscription...' : 'Inscrire'}
+        {pending ? t.enrolling : t.enrollSubmit}
       </button>
     </form>
   )

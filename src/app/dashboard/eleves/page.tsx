@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Plus, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 import { ImportExcelButton } from '@/components/import-excel-button'
 
 function formatFCFA(amount: number) {
@@ -16,6 +17,7 @@ export default async function ElevesPage({
   const { classe, q, statut } = await searchParams
   const { school, schoolYear } = await getCurrentSchool()
   const supabase = await createClient()
+  const t = getDictionary()
 
   const [{ data: classes }, { data: feeStructures }, { data: payments }] = await Promise.all([
     supabase.from('classes').select('id, name').eq('school_id', school.id).order('name'),
@@ -54,9 +56,9 @@ export default async function ElevesPage({
   }
 
   const statusLabel: Record<string, string> = {
-    active: 'Actif',
-    suspended: 'Suspendu',
-    left: 'Parti',
+    active: t.students.statusActive,
+    suspended: t.students.statusSuspended,
+    left: t.students.statusLeft,
   }
   const statusColor: Record<string, string> = {
     active: 'bg-emerald-100 text-emerald-700',
@@ -67,14 +69,14 @@ export default async function ElevesPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Élèves</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.students.title}</h1>
         <div className="flex flex-wrap gap-3 items-start">
           <ImportExcelButton />
           <Link
             href="/dashboard/eleves/nouveau"
             className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
           >
-            <Plus className="w-4 h-4" /> Inscrire un élève
+            <Plus className="w-4 h-4" /> {t.students.enroll}
           </Link>
         </div>
       </div>
@@ -86,7 +88,7 @@ export default async function ElevesPage({
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="Rechercher un nom..."
+            placeholder={t.students.searchPlaceholder}
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           />
         </div>
@@ -95,7 +97,7 @@ export default async function ElevesPage({
           defaultValue={classe ?? ''}
           className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         >
-          <option value="">Toutes les classes</option>
+          <option value="">{t.students.allClasses}</option>
           {(classes ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -107,16 +109,16 @@ export default async function ElevesPage({
           defaultValue={statut ?? ''}
           className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         >
-          <option value="">Tous statuts</option>
-          <option value="active">Actif</option>
-          <option value="suspended">Suspendu</option>
-          <option value="left">Parti</option>
+          <option value="">{t.students.allStatuses}</option>
+          <option value="active">{t.students.statusActive}</option>
+          <option value="suspended">{t.students.statusSuspended}</option>
+          <option value="left">{t.students.statusLeft}</option>
         </select>
         <button
           type="submit"
           className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800"
         >
-          Filtrer
+          {t.common.filter}
         </button>
       </form>
 
@@ -124,11 +126,11 @@ export default async function ElevesPage({
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
-              <th className="px-4 py-3 font-medium">Matricule</th>
-              <th className="px-4 py-3 font-medium">Nom</th>
-              <th className="px-4 py-3 font-medium">Classe</th>
-              <th className="px-4 py-3 font-medium">Statut</th>
-              <th className="px-4 py-3 font-medium text-right">Solde dû</th>
+              <th className="px-4 py-3 font-medium">{t.students.tableRegistration}</th>
+              <th className="px-4 py-3 font-medium">{t.students.tableName}</th>
+              <th className="px-4 py-3 font-medium">{t.students.tableClass}</th>
+              <th className="px-4 py-3 font-medium">{t.students.tableStatus}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.students.tableBalance}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -161,7 +163,7 @@ export default async function ElevesPage({
             {(students ?? []).length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-gray-400">
-                  Aucun élève trouvé.
+                  {t.students.noneFound}
                 </td>
               </tr>
             )}

@@ -2,6 +2,10 @@
 
 import { useActionState, useState, useTransition } from 'react'
 import { inviteTeacher, setTeacherActive, setTeacherRole } from './actions'
+import { getDictionary } from '@/lib/i18n'
+
+const dict = getDictionary()
+const t = dict.teachersPage
 
 interface Teacher {
   id: string
@@ -14,8 +18,8 @@ interface Teacher {
 }
 
 const roleLabel: Record<Teacher['role'], string> = {
-  director: 'Directeur',
-  teacher: 'Enseignant',
+  director: t.roleDirector,
+  teacher: t.roleTeacher,
 }
 
 export function TeacherRow({ teacher, canManage }: { teacher: Teacher; canManage: boolean }) {
@@ -59,7 +63,7 @@ export function TeacherRow({ teacher, canManage }: { teacher: Teacher; canManage
             teacher.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
           }`}
         >
-          {teacher.is_active ? 'Actif' : 'Inactif'}
+          {teacher.is_active ? t.statusActive : t.statusInactive}
         </span>
       </td>
       {canManage && (
@@ -71,7 +75,7 @@ export function TeacherRow({ teacher, canManage }: { teacher: Teacher; canManage
             onClick={toggleRole}
             className="text-xs font-medium text-[#7c3aed] hover:underline disabled:opacity-50"
           >
-            {teacher.role === 'director' ? 'Passer enseignant' : 'Passer directeur'}
+            {teacher.role === 'director' ? t.switchToTeacher : t.switchToDirector}
           </button>
           <button
             type="button"
@@ -79,7 +83,7 @@ export function TeacherRow({ teacher, canManage }: { teacher: Teacher; canManage
             onClick={toggleActive}
             className="text-xs font-medium text-gray-500 hover:underline disabled:opacity-50"
           >
-            {teacher.is_active ? 'Désactiver' : 'Réactiver'}
+            {teacher.is_active ? t.deactivate : t.reactivate}
           </button>
         </td>
       )}
@@ -94,10 +98,10 @@ export function InviteTeacherForm() {
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4 max-w-lg">
-      <h2 className="font-semibold text-gray-900">Inviter un membre du personnel</h2>
+      <h2 className="font-semibold text-gray-900">{t.inviteStaff}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.name}</label>
           <input
             type="text"
             name="name"
@@ -106,7 +110,7 @@ export function InviteTeacherForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.email}</label>
           <input
             type="email"
             name="email"
@@ -115,27 +119,27 @@ export function InviteTeacherForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.role}</label>
           <select
             name="role"
             defaultValue="teacher"
             className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           >
-            <option value="teacher">Enseignant</option>
-            <option value="director">Directeur</option>
+            <option value="teacher">{t.roleTeacher}</option>
+            <option value="director">{t.roleDirector}</option>
           </select>
         </div>
       </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && (
-        <p className="text-sm text-emerald-600">Invitation envoyée à {state.email}.</p>
+        <p className="text-sm text-emerald-600">{t.invitationSentTo} {state.email}.</p>
       )}
       <button
         type="submit"
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Envoi...' : 'Envoyer l’invitation'}
+        {pending ? t.sending : t.sendInvitation}
       </button>
     </form>
   )

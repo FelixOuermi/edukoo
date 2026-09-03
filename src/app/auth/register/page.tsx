@@ -4,6 +4,9 @@ import { useActionState } from 'react'
 import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
 import { signUp } from '../actions'
+import { getDictionary } from '@/lib/i18n'
+
+const t = getDictionary()
 
 export default function RegisterPage() {
   const [state, formAction, pending] = useActionState(signUp, null)
@@ -17,64 +20,63 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Edukoo</h1>
           <p className="text-gray-500 mt-2 text-center">
-            Créez votre espace école en 2 minutes
+            {t.auth.register.tagline}
           </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-violet-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Inscription de l&apos;école
+            {t.auth.register.title}
           </h2>
 
           {state?.pendingConfirmation ? (
             <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-              Compte créé. Vérifiez votre boîte email pour confirmer votre adresse, puis
-              connectez-vous.
+              {t.auth.register.pendingConfirmation}
             </p>
           ) : (
           <form action={formAction} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom de l&apos;école
+                {t.auth.register.schoolNameLabel}
               </label>
               <input
                 type="text"
                 name="schoolName"
                 required
-                placeholder="Ex : Collège Excellence"
+                placeholder={t.auth.register.schoolNamePlaceholder}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom du directeur / de la directrice
+                {t.auth.register.directorNameLabel}
               </label>
               <input
                 type="text"
                 name="directorName"
                 required
-                placeholder="Ex : M. Kouassi Jean"
+                placeholder={t.auth.register.directorNamePlaceholder}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                {t.auth.register.emailLabel}
               </label>
               <input
                 type="email"
                 name="email"
                 required
-                placeholder="directeur@ecole.com"
+                placeholder={t.auth.register.emailPlaceholder}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mot de passe
+                {t.auth.register.passwordLabel}
               </label>
               <input
                 type="password"
@@ -97,15 +99,15 @@ export default function RegisterPage() {
               disabled={pending}
               className="w-full bg-[#7c3aed] hover:bg-violet-700 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-60"
             >
-              {pending ? 'Création...' : 'Créer mon école — Essai gratuit 30 jours'}
+              {pending ? t.auth.register.submitting : t.auth.register.submit}
             </button>
           </form>
           )}
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Déjà un compte ?{' '}
+            {t.auth.register.alreadyHaveAccount}{' '}
             <Link href="/auth/login" className="text-[#7c3aed] font-medium hover:underline">
-              Se connecter
+              {t.auth.register.login}
             </Link>
           </p>
         </div>

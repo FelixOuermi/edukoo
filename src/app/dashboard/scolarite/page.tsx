@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -17,6 +18,8 @@ export default async function ScolaritePage({
   const { classe, statut } = await searchParams
   const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
+  const dict = getDictionary()
+  const t = dict.tuitionPage
 
   const [{ data: classes }, { data: students }, { data: feeStructures }, { data: payments }] =
     await Promise.all([
@@ -71,7 +74,7 @@ export default async function ScolaritePage({
   const totalExpected = rows.reduce((sum, r) => sum + r.expected, 0)
   const totalCollected = rows.reduce((sum, r) => sum + Math.min(r.paid, r.expected || r.paid), 0)
 
-  const statusLabel: Record<Statut, string> = { paye: 'Payé', partiel: 'Partiel', impaye: 'Impayé' }
+  const statusLabel: Record<Statut, string> = { paye: t.statusPaid, partiel: t.statusPartial, impaye: t.statusUnpaid }
   const statusColor: Record<Statut, string> = {
     paye: 'bg-emerald-100 text-emerald-700',
     partiel: 'bg-amber-100 text-amber-700',
@@ -81,26 +84,26 @@ export default async function ScolaritePage({
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Scolarité & Paiements</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
         <Link
           href="/dashboard/scolarite/paiement"
           className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors w-fit"
         >
-          <Plus className="w-4 h-4" /> Enregistrer un paiement
+          <Plus className="w-4 h-4" /> {t.recordPayment}
         </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Total attendu</p>
+          <p className="text-sm text-gray-500">{t.totalExpected}</p>
           <p className="text-xl font-bold text-gray-900 mt-1">{formatFCFA(totalExpected)}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Total encaissé</p>
+          <p className="text-sm text-gray-500">{t.totalCollected}</p>
           <p className="text-xl font-bold text-emerald-600 mt-1">{formatFCFA(totalCollected)}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Solde impayé</p>
+          <p className="text-sm text-gray-500">{t.unpaidBalance}</p>
           <p className="text-xl font-bold text-amber-600 mt-1">
             {formatFCFA(Math.max(totalExpected - totalCollected, 0))}
           </p>
@@ -113,7 +116,7 @@ export default async function ScolaritePage({
           defaultValue={classe ?? ''}
           className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         >
-          <option value="">Toutes les classes</option>
+          <option value="">{t.allClasses}</option>
           {(classes ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -125,13 +128,13 @@ export default async function ScolaritePage({
           defaultValue={statut ?? ''}
           className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         >
-          <option value="">Tous statuts</option>
-          <option value="paye">Payé</option>
-          <option value="partiel">Partiel</option>
-          <option value="impaye">Impayé</option>
+          <option value="">{t.allStatuses}</option>
+          <option value="paye">{t.statusPaid}</option>
+          <option value="partiel">{t.statusPartial}</option>
+          <option value="impaye">{t.statusUnpaid}</option>
         </select>
         <button type="submit" className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800">
-          Filtrer
+          {dict.common.filter}
         </button>
       </form>
 
@@ -139,12 +142,12 @@ export default async function ScolaritePage({
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
-              <th className="px-4 py-3 font-medium">Élève</th>
-              <th className="px-4 py-3 font-medium">Classe</th>
-              <th className="px-4 py-3 font-medium text-right">Attendu</th>
-              <th className="px-4 py-3 font-medium text-right">Payé</th>
-              <th className="px-4 py-3 font-medium text-right">Solde</th>
-              <th className="px-4 py-3 font-medium">Statut</th>
+              <th className="px-4 py-3 font-medium">{t.tableStudent}</th>
+              <th className="px-4 py-3 font-medium">{t.tableClass}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.tableExpected}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.tablePaid}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.tableBalance}</th>
+              <th className="px-4 py-3 font-medium">{t.tableStatus}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -171,7 +174,7 @@ export default async function ScolaritePage({
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
-                  Aucun élève trouvé.
+                  {t.noneFound}
                 </td>
               </tr>
             )}

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 import { PaymentForm } from './payment-form'
 
 export default async function PaiementPage({
@@ -12,6 +13,7 @@ export default async function PaiementPage({
   const { eleve } = await searchParams
   const { school } = await requireDirector()
   const supabase = await createClient()
+  const t = getDictionary().tuitionPage
 
   const { data: students } = await supabase
     .from('students')
@@ -30,10 +32,10 @@ export default async function PaiementPage({
   return (
     <div className="space-y-6">
       <Link href="/dashboard/scolarite" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
-        <ArrowLeft className="w-4 h-4" /> Retour à la scolarité
+        <ArrowLeft className="w-4 h-4" /> {t.backToTuition}
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900">Enregistrer un paiement</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.recordPayment}</h1>
 
       <PaymentForm students={options} preselectedId={eleve} />
     </div>

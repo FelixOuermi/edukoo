@@ -3,6 +3,9 @@
 import { useActionState, useRef } from 'react'
 import { Upload } from 'lucide-react'
 import { importGradesFromExcel } from './actions'
+import { getDictionary } from '@/lib/i18n'
+
+const t = getDictionary().notesPage
 
 const initialState: {
   error?: string
@@ -38,7 +41,7 @@ export function ImportGradesButton({
         <input type="hidden" name="trimester" value={trimester} />
         <label className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-sm font-medium px-4 py-2.5 rounded-lg cursor-pointer text-gray-700">
           <Upload className="w-4 h-4" />
-          {pending ? 'Import en cours...' : 'Importer Excel'}
+          {pending ? t.importInProgress : t.importExcel}
           <input
             type="file"
             name="file"
@@ -54,13 +57,13 @@ export function ImportGradesButton({
       {state?.error && <p className="text-xs text-red-600 max-w-xs">{state.error}</p>}
       {state?.success && (
         <p className="text-xs text-emerald-600">
-          {state.count} note(s) importée(s)
-          {state.unmatchedStudents ? `, ${state.unmatchedStudents} élève(s) non reconnu(s)` : ''}
-          {state.invalidScores ? `, ${state.invalidScores} valeur(s) invalide(s) ignorée(s)` : ''}.
+          {t.gradesImportedTemplate.replace('{count}', String(state.count))}
+          {state.unmatchedStudents ? t.unmatchedStudentsTemplate.replace('{count}', String(state.unmatchedStudents)) : ''}
+          {state.invalidScores ? t.invalidScoresTemplate.replace('{count}', String(state.invalidScores)) : ''}.
         </p>
       )}
       <p className="text-[11px] text-gray-400 max-w-[240px]">
-        Colonnes attendues : Matricule (ou Nom + Prenom), puis une colonne par type de note : {gradeTypeNames.join(', ') || '—'}
+        {t.expectedColumns} {gradeTypeNames.join(', ') || '—'}
       </p>
     </div>
   )

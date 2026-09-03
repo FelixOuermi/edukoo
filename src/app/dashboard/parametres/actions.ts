@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireDirector } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 
 const ALLOWED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
 const MAX_LOGO_SIZE = 2 * 1024 * 1024
@@ -12,13 +13,14 @@ export async function uploadSchoolLogo(_prevState: unknown, formData: FormData) 
   const { school } = await requireDirector()
   const supabase = await createClient()
   const file = formData.get('file') as File | null
+  const t = getDictionary().errors
 
-  if (!file || file.size === 0) return { error: 'Aucun fichier fourni.' }
+  if (!file || file.size === 0) return { error: t.noFileProvided }
   if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
-    return { error: 'Format non supporté. Utilise PNG, JPEG, WebP ou SVG.' }
+    return { error: t.unsupportedLogoFormat }
   }
   if (file.size > MAX_LOGO_SIZE) {
-    return { error: 'Le fichier dépasse 2 Mo.' }
+    return { error: t.logoTooLarge }
   }
 
   const admin = createAdminClient()
@@ -54,6 +56,11 @@ export async function updateSchoolInfo(_prevState: unknown, formData: FormData) 
   const { school } = await requireDirector()
   const supabase = await createClient()
 
+  const absenceAlertThreshold = Number(formData.get('absenceAlertThreshold') || 4)
+  if (!Number.isInteger(absenceAlertThreshold) || absenceAlertThreshold < 1) {
+    return { error: getDictionary().errors.absenceThresholdMustBePositive }
+  }
+
   const { error } = await supabase
     .from('schools')
     .update({
@@ -65,6 +72,7 @@ export async function updateSchoolInfo(_prevState: unknown, formData: FormData) 
       orange_money: (formData.get('orangeMoney') as string) || null,
       moov_money: (formData.get('moovMoney') as string) || null,
       whatsapp: (formData.get('whatsapp') as string) || null,
+      absence_alert_threshold: absenceAlertThreshold,
     })
     .eq('id', school.id)
 
@@ -82,7 +90,7 @@ export async function createSchoolYear(_prevState: unknown, formData: FormData) 
   const startDate = formData.get('startDate') as string
   const endDate = formData.get('endDate') as string
 
-  if (!name || !startDate || !endDate) return { error: 'Tous les champs sont requis.' }
+  if (!name || !startDate || !endDate) return { error: getDictionary().errors.allFieldsRequired }
 
   await supabase.from('school_years').update({ is_current: false }).eq('school_id', school.id)
 
@@ -121,15 +129,16 @@ export async function createPeriod(_prevState: unknown, formData: FormData) {
   const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
 
-  if (!schoolYear) return { error: 'Activez une année scolaire avant de créer des périodes.' }
+  const t = getDictionary().errors
+  if (!schoolYear) return { error: t.activateSchoolYearBeforePeriods }
 
   const number = Number(formData.get('number'))
   const name = formData.get('name') as string
   const startDate = formData.get('startDate') as string
   const endDate = formData.get('endDate') as string
 
-  if (!number || !name || !startDate || !endDate) return { error: 'Tous les champs sont requis.' }
-  if (new Date(endDate) <= new Date(startDate)) return { error: 'La date de fin doit être après la date de début.' }
+  if (!number || !name || !startDate || !endDate) return { error: t.allFieldsRequired }
+  if (new Date(endDate) <= new Date(startDate)) return { error: t.endDateAfterStartDate }
 
   const { error } = await supabase.from('periods').upsert(
     {
@@ -168,13 +177,14 @@ export async function upsertFeeStructure(_prevState: unknown, formData: FormData
   const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
 
-  if (!schoolYear) return { error: 'Créez une année scolaire active avant de définir les frais.' }
+  const t = getDictionary().errors
+  if (!schoolYear) return { error: t.createSchoolYearBeforeFees }
 
   const classId = formData.get('classId') as string
   const totalAmount = Number(formData.get('totalAmount'))
   const installments = Number(formData.get('installments') || 3)
 
-  if (!classId || !totalAmount) return { error: 'Classe et montant sont requis.' }
+  if (!classId || !totalAmount) return { error: t.classAndAmountRequired }
 
   const { data: klass } = await supabase
     .from('classes')
@@ -183,7 +193,7 @@ export async function upsertFeeStructure(_prevState: unknown, formData: FormData
     .eq('school_id', school.id)
     .maybeSingle()
 
-  if (!klass) return { error: 'Classe introuvable.' }
+  if (!klass) return { error: t.classNotFound }
 
   const { data: existing } = await supabase
     .from('fee_structures')

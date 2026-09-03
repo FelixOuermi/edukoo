@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { RegisterServiceWorker } from "@/components/register-sw";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,6 +58,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://edukoo.vercel.app",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#7c3aed",
 };
 
 const jsonLd = {
@@ -122,6 +127,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <RegisterServiceWorker />
         {children}
       </body>
     </html>

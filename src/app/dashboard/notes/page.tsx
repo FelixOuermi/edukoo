@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 import { GradesForm } from './grades-form'
 import { ImportGradesButton } from './import-grades-button'
 
@@ -11,6 +12,8 @@ export default async function NotesPage({
   const { classe, trimestre, matiere } = await searchParams
   const { school, schoolYear, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
+  const dict = getDictionary()
+  const t = dict.notesPage
   const isDirector = role === 'director'
 
   const [{ data: allClasses }, { data: allSubjects }, { data: gradeTypes }, { data: assignments }, { data: periods }] =
@@ -81,11 +84,11 @@ export default async function NotesPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Notes</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
 
       {hasNoAssignment ? (
         <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          Aucune classe ni matière ne vous a été assignée. Demandez à votre directeur de vous affecter depuis la page Enseignants.
+          {t.noAssignment}
         </p>
       ) : (
         <>
@@ -124,17 +127,17 @@ export default async function NotesPage({
               ))}
             </select>
             <button type="submit" className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800">
-              Afficher
+              {dict.common.show}
             </button>
           </form>
 
           {!schoolYear ? (
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-              Aucune année scolaire active. Configurez-la dans Paramètres avant de saisir des notes.
+              {t.noSchoolYear}
             </p>
           ) : (gradeTypes ?? []).length === 0 ? (
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-              Aucun type de note configuré. Ajoutez-en dans Classes &amp; Matières avant de saisir des notes.
+              {t.noGradeTypesConfigured}
             </p>
           ) : classId && subjectId ? (
             <>
@@ -157,7 +160,7 @@ export default async function NotesPage({
               />
             </>
           ) : (
-            <p className="text-sm text-gray-400">Créez d&apos;abord une classe et une matière.</p>
+            <p className="text-sm text-gray-400">{t.createClassAndSubjectFirst}</p>
           )}
         </>
       )}

@@ -16,9 +16,18 @@ export async function getCurrentSchool() {
     .from('teachers')
     .select('id, school_id, role, name')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!teacher) redirect('/auth/login')
+  if (!teacher) {
+    // Pas un compte personnel : c'est peut-être un parent ou un élève qui
+    // a atterri sur /dashboard (lien direct, favori...) — on le renvoie
+    // vers son propre portail plutôt que de le faire passer pour déconnecté.
+    const { data: parent } = await supabase.from('parents').select('id').eq('user_id', user.id).maybeSingle()
+    if (parent) redirect('/espace-parent')
+    const { data: student } = await supabase.from('students').select('id').eq('user_id', user.id).maybeSingle()
+    if (student) redirect('/espace-eleve')
+    redirect('/auth/login')
+  }
 
   const { data: school } = await supabase
     .from('schools')

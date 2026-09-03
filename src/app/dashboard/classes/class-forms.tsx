@@ -2,24 +2,28 @@
 
 import { useActionState, useState, useTransition } from 'react'
 import { createClass, createSubject, createGradeType, deleteGradeType, saveClassCoefficients } from './actions'
+import { getDictionary } from '@/lib/i18n'
+
+const dict = getDictionary()
+const t = dict.classesPage
 
 export function NewClassForm() {
   const [state, formAction, pending] = useActionState(createClass, null)
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-      <h2 className="font-semibold text-gray-900">Ajouter une classe</h2>
+      <h2 className="font-semibold text-gray-900">{t.addClass}</h2>
       <input
         type="text"
         name="name"
         required
-        placeholder="Nom (ex : 6ème A)"
+        placeholder={t.namePlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       <input
         type="text"
         name="level"
-        placeholder="Niveau (ex : Collège)"
+        placeholder={t.levelPlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       <input
@@ -27,7 +31,7 @@ export function NewClassForm() {
         name="maxStudents"
         defaultValue={50}
         min={1}
-        placeholder="Effectif maximum"
+        placeholder={t.maxStudentsPlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
@@ -36,7 +40,7 @@ export function NewClassForm() {
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Ajout...' : 'Ajouter'}
+        {pending ? t.adding : dict.common.add}
       </button>
     </form>
   )
@@ -47,12 +51,12 @@ export function NewSubjectForm() {
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-      <h2 className="font-semibold text-gray-900">Ajouter une matière</h2>
+      <h2 className="font-semibold text-gray-900">{t.addSubject}</h2>
       <input
         type="text"
         name="name"
         required
-        placeholder="Nom (ex : Mathématiques)"
+        placeholder={t.subjectNamePlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       <input
@@ -60,7 +64,7 @@ export function NewSubjectForm() {
         name="coefficient"
         defaultValue={1}
         min={1}
-        placeholder="Coefficient"
+        placeholder={t.coefficientPlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
@@ -69,7 +73,7 @@ export function NewSubjectForm() {
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Ajout...' : 'Ajouter'}
+        {pending ? t.adding : dict.common.add}
       </button>
     </form>
   )
@@ -80,12 +84,12 @@ export function NewGradeTypeForm() {
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-      <h2 className="font-semibold text-gray-900">Ajouter un type de note</h2>
+      <h2 className="font-semibold text-gray-900">{t.addGradeType}</h2>
       <input
         type="text"
         name="name"
         required
-        placeholder="Nom (ex : Composition)"
+        placeholder={t.gradeTypeNamePlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       <input
@@ -94,7 +98,7 @@ export function NewGradeTypeForm() {
         defaultValue={1}
         min={0.5}
         step={0.5}
-        placeholder="Poids"
+        placeholder={t.weightPlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
@@ -103,7 +107,7 @@ export function NewGradeTypeForm() {
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Ajout...' : 'Ajouter'}
+        {pending ? t.adding : dict.common.add}
       </button>
     </form>
   )
@@ -127,7 +131,7 @@ export function DeleteGradeTypeButton({ id }: { id: string }) {
         }
         className="text-xs text-gray-400 hover:text-rose-600 disabled:opacity-50"
       >
-        Supprimer
+        {dict.common.delete}
       </button>
       {error && <p className="text-[11px] text-rose-600 mt-1">{error}</p>}
     </div>
@@ -151,8 +155,8 @@ export function ClassCoefficientsForm({ classId, subjects }: { classId: string; 
         <table className="w-full text-sm">
           <thead className="text-gray-500 text-left border-b border-gray-100">
             <tr>
-              <th className="py-2 font-medium">Matière</th>
-              <th className="py-2 font-medium w-32">Coefficient</th>
+              <th className="py-2 font-medium">{t.tableSubject}</th>
+              <th className="py-2 font-medium w-32">{t.tableCoefficient}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -178,13 +182,13 @@ export function ClassCoefficientsForm({ classId, subjects }: { classId: string; 
         </table>
       </div>
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
-      {state?.success && <p className="text-xs text-emerald-600">Coefficients enregistrés.</p>}
+      {state?.success && <p className="text-xs text-emerald-600">{t.coefficientsSaved}</p>}
       <button
         type="submit"
         disabled={pending}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Enregistrement...' : 'Enregistrer les coefficients'}
+        {pending ? dict.common.saving : t.saveCoefficients}
       </button>
     </form>
   )

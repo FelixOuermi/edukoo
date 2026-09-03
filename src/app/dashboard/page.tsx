@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Users, TrendingUp, Wallet, CalendarX, Plus, ClipboardList, BookOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -10,6 +11,7 @@ function formatFCFA(amount: number) {
 export default async function DashboardPage() {
   const { school, schoolYear, role } = await getCurrentSchool()
   const supabase = await createClient()
+  const t = getDictionary().dashboardHome
   const today = new Date().toISOString().slice(0, 10)
   const isDirector = role === 'director'
 
@@ -40,15 +42,15 @@ export default async function DashboardPage() {
 
   if (!isDirector) {
     const quickLinks = [
-      { href: '/dashboard/notes', label: 'Saisir des notes', icon: ClipboardList },
-      { href: '/dashboard/absences', label: "Faire l'appel", icon: CalendarX },
-      { href: '/dashboard/bulletins', label: 'Consulter les bulletins', icon: BookOpen },
+      { href: '/dashboard/notes', label: t.enterGrades, icon: ClipboardList },
+      { href: '/dashboard/absences', label: t.takeAttendance, icon: CalendarX },
+      { href: '/dashboard/bulletins', label: t.viewReportCards, icon: BookOpen },
     ]
 
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
           <p className="text-gray-500 text-sm mt-1">{school.name}</p>
         </div>
 
@@ -58,14 +60,14 @@ export default async function DashboardPage() {
               <Users className="w-5 h-5" />
             </div>
             <p className="text-2xl font-bold text-gray-900 mt-4">{activeStudents.length.toLocaleString('fr-FR')}</p>
-            <p className="text-sm text-gray-500 mt-1">Élèves actifs</p>
+            <p className="text-sm text-gray-500 mt-1">{t.activeStudents}</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-rose-100 text-rose-600">
               <CalendarX className="w-5 h-5" />
             </div>
             <p className="text-2xl font-bold text-gray-900 mt-4">{absencesToday?.length ?? 0}</p>
-            <p className="text-sm text-gray-500 mt-1">Absences aujourd&apos;hui</p>
+            <p className="text-sm text-gray-500 mt-1">{t.absencesToday}</p>
           </div>
         </div>
 
@@ -85,16 +87,16 @@ export default async function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Absents aujourd&apos;hui</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">{t.absentToday}</h2>
           {(absencesToday?.length ?? 0) === 0 ? (
-            <p className="text-sm text-gray-400">Aucune absence enregistrée aujourd&apos;hui.</p>
+            <p className="text-sm text-gray-400">{t.noAbsenceToday}</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {absencesToday!.map((a) => {
                 const student = a.students as unknown as { first_name: string; last_name: string } | null
                 return (
                   <li key={a.id} className="py-3 text-sm text-gray-800">
-                    {student ? `${student.first_name} ${student.last_name}` : 'Élève'}
+                    {student ? `${student.first_name} ${student.last_name}` : t.student}
                   </li>
                 )
               })}
@@ -141,25 +143,25 @@ export default async function DashboardPage() {
 
   const kpis = [
     {
-      label: 'Élèves actifs',
+      label: t.activeStudents,
       value: activeStudents.length.toLocaleString('fr-FR'),
       icon: Users,
       color: 'bg-violet-100 text-[#7c3aed]',
     },
     {
-      label: 'Taux de recouvrement',
+      label: t.recoveryRate,
       value: `${recoveryRate.toFixed(0)}%`,
       icon: TrendingUp,
       color: 'bg-emerald-100 text-emerald-600',
     },
     {
-      label: 'Montant impayés',
+      label: t.unpaidAmount,
       value: formatFCFA(totalUnpaid),
       icon: Wallet,
       color: 'bg-amber-100 text-amber-600',
     },
     {
-      label: "Absences aujourd'hui",
+      label: t.absencesToday,
       value: String(absencesToday?.length ?? 0),
       icon: CalendarX,
       color: 'bg-rose-100 text-rose-600',
@@ -170,7 +172,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
           <p className="text-gray-500 text-sm mt-1">{school.name}</p>
         </div>
         <div className="flex gap-3">
@@ -178,13 +180,13 @@ export default async function DashboardPage() {
             href="/dashboard/eleves/nouveau"
             className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
           >
-            <Plus className="w-4 h-4" /> Inscrire un élève
+            <Plus className="w-4 h-4" /> {t.enrollStudent}
           </Link>
           <Link
             href="/dashboard/scolarite/paiement"
             className="inline-flex items-center gap-2 bg-white border border-violet-200 text-[#7c3aed] hover:bg-violet-50 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
           >
-            <Plus className="w-4 h-4" /> Enregistrer un paiement
+            <Plus className="w-4 h-4" /> {t.recordPayment}
           </Link>
         </div>
       </div>
@@ -203,9 +205,9 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Top 5 impayés</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">{t.top5Unpaid}</h2>
           {topUnpaid.length === 0 ? (
-            <p className="text-sm text-gray-400">Aucun impayé — bravo !</p>
+            <p className="text-sm text-gray-400">{t.noUnpaid}</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {topUnpaid.map((s) => (
@@ -222,16 +224,16 @@ export default async function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Absents aujourd&apos;hui</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">{t.absentToday}</h2>
           {(absencesToday?.length ?? 0) === 0 ? (
-            <p className="text-sm text-gray-400">Aucune absence enregistrée aujourd&apos;hui.</p>
+            <p className="text-sm text-gray-400">{t.noAbsenceToday}</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {absencesToday!.map((a) => {
                 const student = a.students as unknown as { first_name: string; last_name: string } | null
                 return (
                   <li key={a.id} className="py-3 text-sm text-gray-800">
-                    {student ? `${student.first_name} ${student.last_name}` : 'Élève'}
+                    {student ? `${student.first_name} ${student.last_name}` : t.student}
                   </li>
                 )
               })}

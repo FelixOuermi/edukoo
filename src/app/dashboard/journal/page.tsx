@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 
 export default async function JournalPage() {
   const { school } = await requireDirector()
   const supabase = await createClient()
+  const t = getDictionary().journalPage
 
   const { data: entries } = await supabase
     .from('audit_log')
@@ -15,18 +17,18 @@ export default async function JournalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Journal d&apos;audit</h1>
-        <p className="text-sm text-gray-500 mt-1">Les 200 dernières actions sensibles : rôles, statuts, invitations, suppressions, paiements.</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.subtitle}</p>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
-              <th className="px-4 py-3 font-medium whitespace-nowrap">Date</th>
-              <th className="px-4 py-3 font-medium">Auteur</th>
-              <th className="px-4 py-3 font-medium">Action</th>
-              <th className="px-4 py-3 font-medium">Détails</th>
+              <th className="px-4 py-3 font-medium whitespace-nowrap">{t.tableDate}</th>
+              <th className="px-4 py-3 font-medium">{t.tableAuthor}</th>
+              <th className="px-4 py-3 font-medium">{t.tableAction}</th>
+              <th className="px-4 py-3 font-medium">{t.tableDetails}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -45,7 +47,7 @@ export default async function JournalPage() {
             {(entries ?? []).length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-10 text-center text-gray-400">
-                  Aucune action enregistrée pour l&apos;instant.
+                  {t.noEntries}
                 </td>
               </tr>
             )}

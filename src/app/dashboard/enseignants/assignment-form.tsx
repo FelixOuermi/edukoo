@@ -2,6 +2,10 @@
 
 import { useActionState } from 'react'
 import { saveTeacherAssignments } from './actions'
+import { getDictionary } from '@/lib/i18n'
+
+const dict = getDictionary()
+const t = dict.teachersPage
 
 interface Subject {
   id: string
@@ -27,7 +31,7 @@ export function TeacherAssignmentForm({
       <input type="hidden" name="teacherId" value={teacherId} />
       <input type="hidden" name="classId" value={classId} />
       {subjects.length === 0 ? (
-        <p className="text-sm text-gray-400">Aucune matière créée.</p>
+        <p className="text-sm text-gray-400">{t.noSubjectsCreated}</p>
       ) : (
         <div className="flex flex-wrap gap-3">
           {subjects.map((s) => (
@@ -39,13 +43,13 @@ export function TeacherAssignmentForm({
         </div>
       )}
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
-      {state?.success && <p className="text-xs text-emerald-600">Affectation enregistrée.</p>}
+      {state?.success && <p className="text-xs text-emerald-600">{t.assignmentSaved}</p>}
       <button
         type="submit"
         disabled={pending || subjects.length === 0}
         className="bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
       >
-        {pending ? 'Enregistrement...' : 'Enregistrer l’affectation'}
+        {pending ? t.saving : t.saveAssignment}
       </button>
     </form>
   )

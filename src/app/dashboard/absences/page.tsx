@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 import { AbsencesForm } from './absences-form'
 
 export default async function AbsencesPage({
@@ -10,6 +11,8 @@ export default async function AbsencesPage({
   const { classe, date } = await searchParams
   const { school, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
+  const dict = getDictionary()
+  const t = dict.absencesPage
   const isDirector = role === 'director'
 
   const [{ data: allClasses }, { data: assignments }] = await Promise.all([
@@ -70,7 +73,7 @@ export default async function AbsencesPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Absences</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
 
       <form method="get" className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap gap-3 items-center">
         <select
@@ -91,7 +94,7 @@ export default async function AbsencesPage({
           className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         />
         <button type="submit" className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800">
-          Afficher
+          {dict.common.show}
         </button>
       </form>
 
@@ -105,10 +108,10 @@ export default async function AbsencesPage({
         />
       ) : !isDirector ? (
         <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          Aucune classe ne vous a été assignée. Demandez à votre directeur de vous affecter depuis la page Enseignants.
+          {t.noAssignment}
         </p>
       ) : (
-        <p className="text-sm text-gray-400">Créez d&apos;abord une classe.</p>
+        <p className="text-sm text-gray-400">{t.createClassFirst}</p>
       )}
     </div>
   )

@@ -2,6 +2,9 @@
 
 import { useActionState, useMemo, useState } from 'react'
 import { saveGrades } from './actions'
+import { getDictionary } from '@/lib/i18n'
+
+const t = getDictionary().notesPage
 
 interface GradeType {
   id: string
@@ -76,7 +79,7 @@ export function GradesForm({
 
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
         <span className="text-sm text-gray-600">
-          Moyenne classe : <span className="font-semibold text-gray-900">{classAverage !== null ? classAverage.toFixed(2) : '—'}/20</span>
+          {t.classAverage} : <span className="font-semibold text-gray-900">{classAverage !== null ? classAverage.toFixed(2) : '—'}/20</span>
         </span>
       </div>
 
@@ -84,7 +87,7 @@ export function GradesForm({
         <table className="w-full text-sm">
           <thead className="text-gray-500 text-left border-b border-gray-100">
             <tr>
-              <th className="px-4 py-2 font-medium">Élève</th>
+              <th className="px-4 py-2 font-medium">{t.student}</th>
               {gradeTypes.map((gt) => (
                 <th key={gt.id} className="px-4 py-2 font-medium w-28">
                   {gt.name}
@@ -92,7 +95,7 @@ export function GradesForm({
                   <input type="hidden" name="gradeTypeId" value={gt.id} />
                 </th>
               ))}
-              <th className="px-4 py-2 font-medium w-24 text-right">Moyenne</th>
+              <th className="px-4 py-2 font-medium w-24 text-right">{t.average}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -124,7 +127,7 @@ export function GradesForm({
             {students.length === 0 && (
               <tr>
                 <td colSpan={gradeTypes.length + 2} className="px-4 py-8 text-center text-gray-400">
-                  Aucun élève dans cette classe.
+                  {t.noStudentsInClass}
                 </td>
               </tr>
             )}
@@ -138,10 +141,12 @@ export function GradesForm({
           disabled={pending || students.length === 0}
           className="bg-[#7c3aed] hover:bg-violet-700 text-white font-medium px-5 py-2.5 rounded-lg transition-colors disabled:opacity-60"
         >
-          {pending ? 'Sauvegarde...' : 'Sauvegarder les notes'}
+          {pending ? t.saving : t.saveGrades}
         </button>
         {state?.error && <span className="text-sm text-red-600">{state.error}</span>}
-        {state?.success && <span className="text-sm text-emerald-600">{state.count} note(s) enregistrée(s).</span>}
+        {state?.success && (
+          <span className="text-sm text-emerald-600">{t.gradesSavedTemplate.replace('{count}', String(state.count))}</span>
+        )}
       </div>
     </form>
   )
