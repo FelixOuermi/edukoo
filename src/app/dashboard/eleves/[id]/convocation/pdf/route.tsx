@@ -3,11 +3,14 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { ConvocationDocument } from '@/lib/pdf/convocation-document'
+import { getDictionary } from '@/lib/i18n'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { school } = await getCurrentSchool()
   const supabase = await createClient()
+  const dict = getDictionary()
+  const t = dict.documents.convocation
 
   const { data: student } = await supabase
     .from('students')
@@ -17,22 +20,23 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .single()
 
   if (!student) {
-    return NextResponse.json({ error: 'Élève introuvable.' }, { status: 404 })
+    return NextResponse.json({ error: dict.errors.studentNotFound }, { status: 404 })
   }
 
   const { searchParams } = new URL(request.url)
-  const subject = searchParams.get('subject')?.trim() || 'Convocation'
+  const subject = searchParams.get('subject')?.trim() || t.title
   const meetingDate = searchParams.get('meetingDate')
   const meetingTime = searchParams.get('meetingTime')?.trim() || null
   const place = searchParams.get('place')?.trim() || null
   const message = searchParams.get('message')?.trim() || ''
 
   if (!meetingDate) {
-    return NextResponse.json({ error: 'Date du rendez-vous requise.' }, { status: 400 })
+    return NextResponse.json({ error: dict.errors.meetingDateRequired }, { status: 400 })
   }
 
   const className = (student.classes as unknown as { name: string } | null)?.name ?? null
-  const recipientName = student.parent_name || `les parents de ${student.first_name} ${student.last_name}`
+  const recipientName =
+    student.parent_name || t.defaultParentsTemplate.replace('{name}', `${student.first_name} ${student.last_name}`)
 
   const buffer = await renderToBuffer(
     <ConvocationDocument

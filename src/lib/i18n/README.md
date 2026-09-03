@@ -50,16 +50,17 @@ Fonctionne aussi bien dans un composant serveur que client (c'est un objet synch
 - Tout `src/app/espace-parent/**` (layout, page d'accueil, `[studentId]/page.tsx`, `message-thread.tsx`, `absence-row.tsx`, messages d'erreur de `message-actions.ts`/`absence-actions.ts`)
 - Tout `src/app/espace-eleve/**` (layout, page)
 - `src/lib/timetable.ts` (`DAY_LABELS` vient maintenant de `getDictionary().days` — `SCHOOL_DAYS` et `timesOverlap` inchangés, l'API publique du module n'a pas bougé)
+- `src/lib/pdf/**` (`receipt-document.tsx`, `service-receipt-document.tsx`, `bulletin-document.tsx`, `certificate-document.tsx`, `convocation-document.tsx`) — namespace `documents` (`documents.common` pour les fragments partagés signature/pied de page entre certificat et convocation, `documents.receipt`/`serviceReceipt`/`bulletin`/`certificate`/`convocation` pour le reste)
+- `src/app/dashboard/statistiques/export/route.ts` et `src/app/dashboard/parametres/export/route.ts` — namespace `excelExport` (`excelExport.statistics` et `excelExport.fullExport`), en-têtes de colonnes utilisés comme clés d'objet (`{ [t.classHeader]: ... }`) pour que `XLSX.utils.json_to_sheet` continue de les prendre comme en-têtes
+- Les 3 routes appelantes de `CertificateDocument`/`ConvocationDocument` (`dashboard/eleves/[id]/certificat/pdf`, `dashboard/eleves/[id]/attestation/pdf`, `dashboard/eleves/[id]/convocation/pdf`, `espace-parent/[studentId]/certificat`) qui construisaient le texte du corps du document — utilisent maintenant `documents.certificate`/`documents.convocation` avec des templates `{placeholder}` remplacés séquentiellement, même convention que le reste du dictionnaire
 
-**Tout le chrome applicatif est désormais migré** (tout `src/app/dashboard/**`, les deux portails, la lib partagée `timetable.ts`), à l'exception des routes d'export/PDF ci-dessous.
+**Tout le chrome applicatif et tous les documents générés (PDF + Excel) sont désormais migrés.** Il ne reste plus de chaîne française en dur dans `src/app/**` ni `src/lib/pdf/**`.
 
 ## Reste à faire
 
-Seules les routes d'export (`statistiques/export/route.ts`, `parametres/export/route.ts`) et les documents PDF (`src/lib/pdf/**`) contiennent encore des chaînes françaises — volontairement pas touchées. Ce sont des en-têtes de colonnes Excel et du contenu de document (pas du chrome d'appli), une catégorie à part qui mérite sa propre passe dédiée plutôt que d'être migrée à moitié en passant sur une seule page. Tout le reste de l'application passe par `getDictionary()`.
+Rien d'identifié pour l'instant — toute l'application (chrome + documents PDF/Excel) passe par `getDictionary()`. Le seul travail restant pour une 2ᵉ langue est celui déjà documenté plus haut : créer `locales/en.ts` avec la même forme que `locales/fr.ts`, l'enregistrer dans `index.ts`, puis brancher une détection de locale.
 
-Note : `src/lib/timetable.ts` (`DAY_LABELS`) contient aussi des noms de jours en dur, partagés par `dashboard/emploi-du-temps`, `espace-parent` et `espace-eleve` — volontairement pas encore migré (fichier partagé, à traiter avec précaution plutôt qu'en passant vite sur une seule page).
-
-Note pour la suite : `locales/fr.ts` a maintenant un namespace `paymentMethods` (cash/orange_money/moov_money/transfer) réutilisable partout où un `paymentMethodLabel` local existe encore en dur (scolarité, services, reçus PDF) — remplacer ces objets locaux par `getDictionary().paymentMethods` au lieu de les dupliquer à nouveau.
+Note pour la suite : `locales/fr.ts` a un namespace `paymentMethods` (cash/orange_money/moov_money/transfer) réutilisable partout où un `paymentMethodLabel` local existe encore en dur — déjà appliqué aux deux documents de reçu PDF.
 
 Pour continuer, migrer page par page en suivant le même schéma que dans `auth/login/page.tsx` :
 

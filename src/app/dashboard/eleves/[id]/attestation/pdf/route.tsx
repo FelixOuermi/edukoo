@@ -3,11 +3,14 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { CertificateDocument } from '@/lib/pdf/certificate-document'
+import { getDictionary } from '@/lib/i18n'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { school, schoolYear } = await getCurrentSchool()
   const supabase = await createClient()
+  const dict = getDictionary()
+  const t = dict.documents.certificate
 
   const { data: student } = await supabase
     .from('students')
@@ -17,14 +20,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .single()
 
   if (!student) {
-    return NextResponse.json({ error: 'Élève introuvable.' }, { status: 404 })
+    return NextResponse.json({ error: dict.errors.studentNotFound }, { status: 404 })
   }
 
   if (!schoolYear) {
-    return NextResponse.json({ error: 'Aucune année scolaire active.' }, { status: 400 })
+    return NextResponse.json({ error: dict.errors.noActiveSchoolYear }, { status: 400 })
   }
 
-  const className = (student.classes as unknown as { name: string } | null)?.name ?? 'non affectée'
+  const className = (student.classes as unknown as { name: string } | null)?.name ?? t.classUnassigned
 
   const buffer = await renderToBuffer(
     <CertificateDocument
@@ -33,10 +36,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         schoolAddress: school.address,
         schoolPhone: school.phone,
         schoolLogoUrl: school.logo_url,
-        title: 'Attestation de réussite',
+        title: t.graduationCertTitle,
         bodyLines: [
-          `Je soussigné(e), Directeur/Directrice de ${school.name}, atteste que l’élève ${student.first_name} ${student.last_name} a été régulièrement inscrit(e) et a suivi avec assiduité les cours de la classe de ${className} durant l’année scolaire ${schoolYear.name}.`,
-          `L’intéressé(e) a satisfait aux exigences de fin d’année et est autorisé(e) à poursuivre sa scolarité dans la classe supérieure.`,
+          t.graduationBody1Template
+            .replace('{school}', school.name)
+            .replace('{student}', `${student.first_name} ${student.last_name}`)
+            .replace('{class}', className)
+            .replace('{year}', schoolYear.name),
+          t.graduationBody2,
         ],
         issuedAt: new Date().toISOString(),
         directorName: school.director_name,

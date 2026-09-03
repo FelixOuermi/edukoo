@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
+import { getDictionary } from '@/lib/i18n'
 
 function formatDate(value: string | null) {
   return value ? new Date(value).toISOString().slice(0, 10) : ''
@@ -10,6 +11,7 @@ function formatDate(value: string | null) {
 export async function GET() {
   const { school } = await requireDirector()
   const supabase = await createClient()
+  const t = getDictionary().excelExport.fullExport
 
   const [
     { data: students },
@@ -47,83 +49,87 @@ export async function GET() {
   const workbook = XLSX.utils.book_new()
 
   const studentsSheet = (students ?? []).map((s) => ({
-    Matricule: s.registration_number,
-    Prenom: s.first_name,
-    Nom: s.last_name,
-    Classe: (s.classes as unknown as { name: string } | null)?.name ?? '',
-    DateNaissance: formatDate(s.birth_date),
-    Statut: s.status,
-    ParentNom: s.parent_name,
-    ParentTelephone: s.parent_phone,
-    ParentWhatsapp: s.parent_whatsapp,
-    ParentEmail: s.parent_email,
+    [t.registrationHeader]: s.registration_number,
+    [t.firstNameHeader]: s.first_name,
+    [t.lastNameHeader]: s.last_name,
+    [t.classHeader]: (s.classes as unknown as { name: string } | null)?.name ?? '',
+    [t.birthDateHeader]: formatDate(s.birth_date),
+    [t.statusHeader]: s.status,
+    [t.parentNameHeader]: s.parent_name,
+    [t.parentPhoneHeader]: s.parent_phone,
+    [t.parentWhatsappHeader]: s.parent_whatsapp,
+    [t.parentEmailHeader]: s.parent_email,
   }))
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(studentsSheet), 'Élèves')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(studentsSheet), t.sheetStudents)
 
-  const classesSheet = (classes ?? []).map((c) => ({ Nom: c.name, Niveau: c.level, EffectifMax: c.max_students }))
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(classesSheet), 'Classes')
-
-  const subjectsSheet = (subjects ?? []).map((s) => ({ Nom: s.name, Coefficient: s.coefficient }))
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(subjectsSheet), 'Matières')
-
-  const teachersSheet = (teachers ?? []).map((t) => ({
-    Nom: t.name,
-    Telephone: t.phone,
-    Email: t.email,
-    Role: t.role === 'director' ? 'Directeur' : 'Enseignant',
-    Statut: t.is_active ? 'Actif' : 'Inactif',
+  const classesSheet = (classes ?? []).map((c) => ({
+    [t.nameHeader]: c.name,
+    [t.levelHeader]: c.level,
+    [t.maxStudentsHeader]: c.max_students,
   }))
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(teachersSheet), 'Enseignants')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(classesSheet), t.sheetClasses)
 
-  const gradeTypesSheet = (gradeTypes ?? []).map((gt) => ({ Nom: gt.name, Poids: gt.weight }))
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(gradeTypesSheet), 'Types de notes')
+  const subjectsSheet = (subjects ?? []).map((s) => ({ [t.nameHeader]: s.name, [t.coefficientHeader]: s.coefficient }))
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(subjectsSheet), t.sheetSubjects)
+
+  const teachersSheet = (teachers ?? []).map((tc) => ({
+    [t.nameHeader]: tc.name,
+    [t.phoneHeader]: tc.phone,
+    [t.emailHeader]: tc.email,
+    [t.roleHeader]: tc.role === 'director' ? t.roleDirector : t.roleTeacher,
+    [t.statusHeader]: tc.is_active ? t.statusActive : t.statusInactive,
+  }))
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(teachersSheet), t.sheetTeachers)
+
+  const gradeTypesSheet = (gradeTypes ?? []).map((gt) => ({ [t.nameHeader]: gt.name, [t.weightHeader]: gt.weight }))
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(gradeTypesSheet), t.sheetGradeTypes)
 
   const gradesSheet = (grades ?? []).map((g) => {
     const student = g.students as unknown as { first_name: string; last_name: string; registration_number: string | null } | null
     return {
-      Matricule: student?.registration_number,
-      Eleve: student ? `${student.first_name} ${student.last_name}` : '',
-      Matiere: (g.subjects as unknown as { name: string } | null)?.name ?? '',
-      TypeNote: (g.grade_types as unknown as { name: string } | null)?.name ?? '',
-      AnneeScolaire: (g.school_years as unknown as { name: string } | null)?.name ?? '',
-      Trimestre: g.trimester,
-      Note: g.score,
-      Bareme: g.max_score,
+      [t.registrationHeader]: student?.registration_number,
+      [t.studentHeader]: student ? `${student.first_name} ${student.last_name}` : '',
+      [t.subjectHeader]: (g.subjects as unknown as { name: string } | null)?.name ?? '',
+      [t.gradeTypeHeader]: (g.grade_types as unknown as { name: string } | null)?.name ?? '',
+      [t.schoolYearHeader]: (g.school_years as unknown as { name: string } | null)?.name ?? '',
+      [t.trimesterHeader]: g.trimester,
+      [t.scoreHeader]: g.score,
+      [t.maxScoreHeader]: g.max_score,
     }
   })
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(gradesSheet), 'Notes')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(gradesSheet), t.sheetGrades)
 
   const absencesSheet = (absences ?? []).map((a) => {
     const student = a.students as unknown as { first_name: string; last_name: string } | null
     return {
-      Eleve: student ? `${student.first_name} ${student.last_name}` : '',
-      Classe: (a.classes as unknown as { name: string } | null)?.name ?? '',
-      Date: formatDate(a.absence_date),
-      Justifiee: a.is_justified ? 'Oui' : 'Non',
+      [t.studentHeader]: student ? `${student.first_name} ${student.last_name}` : '',
+      [t.classHeader]: (a.classes as unknown as { name: string } | null)?.name ?? '',
+      [t.dateHeader]: formatDate(a.absence_date),
+      [t.justifiedHeader]: a.is_justified ? t.yes : t.no,
     }
   })
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(absencesSheet), 'Absences')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(absencesSheet), t.sheetAbsences)
 
   const paymentsSheet = (payments ?? []).map((p) => {
     const student = p.students as unknown as { first_name: string; last_name: string } | null
     return {
-      Recu: p.receipt_number,
-      Eleve: student ? `${student.first_name} ${student.last_name}` : '',
-      Tranche: p.installment_number,
-      Montant: Number(p.amount),
-      Mode: p.payment_method,
-      Date: formatDate(p.paid_at),
+      [t.receiptHeader]: p.receipt_number,
+      [t.studentHeader]: student ? `${student.first_name} ${student.last_name}` : '',
+      [t.installmentHeader]: p.installment_number,
+      [t.amountHeader]: Number(p.amount),
+      [t.modeHeader]: p.payment_method,
+      [t.dateHeader]: formatDate(p.paid_at),
     }
   })
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(paymentsSheet), 'Paiements')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(paymentsSheet), t.sheetPayments)
 
   const yearsSheet = (schoolYears ?? []).map((y) => ({
-    Nom: y.name,
-    Debut: formatDate(y.start_date),
-    Fin: formatDate(y.end_date),
-    Active: y.is_current ? 'Oui' : 'Non',
+    [t.nameHeader]: y.name,
+    [t.startHeader]: formatDate(y.start_date),
+    [t.endHeader]: formatDate(y.end_date),
+    [t.activeHeader]: y.is_current ? t.yes : t.no,
   }))
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(yearsSheet), 'Années scolaires')
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(yearsSheet), t.sheetSchoolYears)
 
   const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
   const filename = `edukoo-export-${school.name.replace(/[^a-z0-9]+/gi, '-')}-${new Date().toISOString().slice(0, 10)}.xlsx`

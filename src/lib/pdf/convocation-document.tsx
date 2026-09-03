@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
+import { getDictionary } from '@/lib/i18n'
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 11, fontFamily: 'Helvetica', color: '#1f2937' },
@@ -50,6 +51,10 @@ export interface ConvocationData {
 }
 
 export function ConvocationDocument({ data }: { data: ConvocationData }) {
+  const dict = getDictionary()
+  const t = dict.documents.convocation
+  const tc = dict.documents.common
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -62,33 +67,33 @@ export function ConvocationDocument({ data }: { data: ConvocationData }) {
           </View>
         </View>
 
-        <Text style={styles.title}>Convocation</Text>
+        <Text style={styles.title}>{t.title}</Text>
         <Text style={styles.subject}>{data.subject}</Text>
 
-        <Text style={styles.recipient}>À l’attention de {data.recipientName},</Text>
+        <Text style={styles.recipient}>{t.toAttentionOfTemplate.replace('{name}', data.recipientName)}</Text>
 
         <Text style={styles.body}>
-          Nous vous prions de bien vouloir vous présenter à l’établissement concernant l’élève{' '}
+          {t.bodyPrefix}
           <Text style={{ fontWeight: 700 }}>{data.studentName}</Text>
-          {data.className ? ` (classe de ${data.className})` : ''}.
+          {(data.className ? t.classSuffixTemplate.replace('{class}', data.className) : '') + '.'}
         </Text>
 
         <View style={styles.infoBox}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Date</Text>
+            <Text style={styles.infoLabel}>{t.date}</Text>
             <Text style={styles.infoValue}>
               {new Date(data.meetingDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </Text>
           </View>
           {data.meetingTime && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Heure</Text>
+              <Text style={styles.infoLabel}>{t.time}</Text>
               <Text style={styles.infoValue}>{data.meetingTime}</Text>
             </View>
           )}
           {data.place && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Lieu</Text>
+              <Text style={styles.infoLabel}>{t.place}</Text>
               <Text style={styles.infoValue}>{data.place}</Text>
             </View>
           )}
@@ -98,15 +103,19 @@ export function ConvocationDocument({ data }: { data: ConvocationData }) {
 
         <View style={styles.signature}>
           <Text style={styles.signatureLine}>
-            Fait à {data.schoolName}, le{' '}
-            {new Date(data.issuedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            {tc.madeAtTemplate
+              .replace('{school}', data.schoolName)
+              .replace(
+                '{date}',
+                new Date(data.issuedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+              )}
           </Text>
-          <Text style={styles.signatureLine}>Le Directeur / La Directrice</Text>
+          <Text style={styles.signatureLine}>{tc.directorLine}</Text>
           {data.directorName && <Text style={styles.signatureName}>{data.directorName}</Text>}
         </View>
 
         <View style={styles.footer}>
-          <Text>Document généré par Edukoo.</Text>
+          <Text>{tc.genericFooter}</Text>
         </View>
       </Page>
     </Document>

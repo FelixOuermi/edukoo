@@ -4,7 +4,11 @@ import {
   FileCheck,
   TrendingUp,
   MessageCircle,
+  MessagesSquare,
   Smartphone,
+  Users,
+  CalendarDays,
+  FileText,
   Check,
   Quote,
 } from 'lucide-react'
@@ -12,33 +16,37 @@ import {
 const ADVANTAGES = [
   { icon: FileCheck, text: 'Bulletins générés en 1 clic' },
   { icon: TrendingUp, text: 'Suivi des impayés en temps réel' },
-  { icon: MessageCircle, text: 'Absences et alertes WhatsApp parents' },
+  { icon: Users, text: 'Portail parent & élève dédié' },
+  { icon: MessagesSquare, text: 'Messagerie enseignant ↔ parent' },
+  { icon: MessageCircle, text: 'Absences et alertes WhatsApp' },
+  { icon: CalendarDays, text: 'Emploi du temps & cahier de textes' },
+  { icon: FileText, text: 'Certificats, attestations & convocations PDF' },
   { icon: Smartphone, text: 'Paiements Orange Money et Moov Money' },
 ]
 
 const PLANS = [
   {
     name: 'Starter',
-    price: '50 000',
+    price: '75 000',
     period: 'FCFA / an',
     detail: "Jusqu'à 150 élèves",
-    features: ['Gestion élèves & classes', 'Paiements & reçus', 'Bulletins PDF', 'Support email'],
+    features: ['Gestion élèves & classes', 'Paiements & reçus', 'Bulletins PDF', 'Portail parent & élève', 'Support email'],
     highlighted: false,
   },
   {
     name: 'School',
-    price: '120 000',
+    price: '200 000',
     period: 'FCFA / an',
     detail: "Jusqu'à 500 élèves",
-    features: ['Tout Starter', 'Alertes WhatsApp parents', 'Import Excel en masse', 'Support prioritaire'],
+    features: ['Tout Starter', 'Messagerie & alertes WhatsApp', 'Emploi du temps & cahier de textes', 'Import Excel en masse', 'Support prioritaire'],
     highlighted: true,
   },
   {
     name: 'Premium',
-    price: '250 000',
+    price: '400 000',
     period: 'FCFA / an',
     detail: 'Élèves illimités',
-    features: ['Tout School', 'Multi-établissements', 'Statistiques avancées', 'Support dédié'],
+    features: ['Tout School', 'Cantine, transport & salles', 'Statistiques avancées', 'Multi-établissements', 'Support dédié'],
     highlighted: false,
   },
 ]
@@ -180,11 +188,12 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900">Pour tous vos établissements</h2>
           <p className="text-lg text-gray-600 mt-5 leading-relaxed">
-            Edukoo s&apos;adapte à tous les types d&apos;établissements privés : écoles primaires,
-            collèges, lycées, universités et instituts de formation professionnelle au Burkina
-            Faso et dans toute l&apos;Afrique francophone. Que vous gériez 50 ou 2000 élèves,
-            Edukoo centralise votre gestion scolaire en FCFA avec les outils que vous utilisez
-            déjà : WhatsApp, Orange Money et Moov Money.
+            Edukoo s&apos;adapte à tous les établissements privés du secondaire : écoles
+            primaires, collèges et lycées au Burkina Faso et dans toute l&apos;Afrique
+            francophone. Que vous gériez 50 ou 2000 élèves, Edukoo centralise votre gestion
+            scolaire en FCFA — notes, absences, discipline, emploi du temps, communication avec
+            les parents — avec les outils que vous utilisez déjà : WhatsApp, Orange Money et Moov
+            Money.
           </p>
         </div>
       </section>

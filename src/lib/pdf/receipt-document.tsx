@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
+import { getDictionary } from '@/lib/i18n'
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 11, fontFamily: 'Helvetica', color: '#1f2937' },
@@ -34,13 +35,6 @@ const styles = StyleSheet.create({
   footer: { marginTop: 40, borderTop: '1 solid #e5e7eb', paddingTop: 12, fontSize: 9, color: '#9ca3af', textAlign: 'center' },
 })
 
-const paymentMethodLabel: Record<string, string> = {
-  cash: 'Espèces',
-  orange_money: 'Orange Money',
-  moov_money: 'Moov Money',
-  transfer: 'Virement',
-}
-
 export interface ReceiptData {
   schoolName: string
   schoolAddress?: string | null
@@ -66,6 +60,9 @@ function formatFCFA(amount: number) {
 
 export function ReceiptDocument({ data }: { data: ReceiptData }) {
   const formattedAmount = formatFCFA(data.amount)
+  const dict = getDictionary()
+  const t = dict.documents.receipt
+  const paymentMethodLabel: Record<string, string> = dict.paymentMethods
 
   return (
     <Document>
@@ -80,30 +77,30 @@ export function ReceiptDocument({ data }: { data: ReceiptData }) {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.receiptTitle}>REÇU DE PAIEMENT</Text>
+            <Text style={styles.receiptTitle}>{t.title}</Text>
             <Text style={styles.receiptNumber}>{data.receiptNumber}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.row}>
-            <Text style={styles.label}>Élève</Text>
+            <Text style={styles.label}>{t.student}</Text>
             <Text style={styles.value}>{data.studentName}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Classe</Text>
+            <Text style={styles.label}>{t.class}</Text>
             <Text style={styles.value}>{data.className ?? '—'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Tranche</Text>
+            <Text style={styles.label}>{t.installment}</Text>
             <Text style={styles.value}>{data.installmentNumber}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Mode de paiement</Text>
+            <Text style={styles.label}>{t.paymentMethod}</Text>
             <Text style={styles.value}>{paymentMethodLabel[data.paymentMethod] ?? data.paymentMethod}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>{t.date}</Text>
             <Text style={styles.value}>
               {new Date(data.paidAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </Text>
@@ -111,12 +108,12 @@ export function ReceiptDocument({ data }: { data: ReceiptData }) {
         </View>
 
         <View style={styles.amountBox}>
-          <Text style={styles.amountLabel}>Montant reçu</Text>
+          <Text style={styles.amountLabel}>{t.amountReceived}</Text>
           <Text style={styles.amountValue}>{formattedAmount} FCFA</Text>
         </View>
 
         <View style={styles.footer}>
-          <Text>Reçu généré par Edukoo — merci de conserver ce document.</Text>
+          <Text>{t.footer}</Text>
         </View>
       </Page>
     </Document>

@@ -8,12 +8,12 @@ const PLANS = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 50000,
+    price: 75000,
     features: [
       "Jusqu'à 150 élèves",
       'Bulletins PDF illimités',
       'Suivi paiements scolarité',
-      'Absences + alertes WhatsApp',
+      'Portail parent & élève',
       'Support WhatsApp',
     ],
     highlighted: false,
@@ -21,12 +21,13 @@ const PLANS = [
   {
     id: 'school',
     name: 'School',
-    price: 120000,
+    price: 200000,
     features: [
       "Jusqu'à 500 élèves",
       'Tout Starter',
+      'Messagerie & alertes WhatsApp',
+      'Emploi du temps & cahier de textes',
       'Import élèves Excel',
-      'Rapports avancés',
       'Support prioritaire',
     ],
     highlighted: true,
@@ -34,8 +35,15 @@ const PLANS = [
   {
     id: 'premium',
     name: 'Premium',
-    price: 250000,
-    features: ['Élèves illimités', 'Tout School', 'Multi-utilisateurs', 'Support dédié'],
+    price: 400000,
+    features: [
+      'Élèves illimités',
+      'Tout School',
+      'Cantine, transport & salles',
+      'Statistiques avancées',
+      'Multi-utilisateurs',
+      'Support dédié',
+    ],
     highlighted: false,
   },
 ]

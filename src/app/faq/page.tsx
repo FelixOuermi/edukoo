@@ -47,12 +47,12 @@ const FAQS = [
   {
     question: "Quel est le prix d'Edukoo ?",
     answer:
-      'Edukoo propose trois plans annuels en FCFA : Starter à 50 000 FCFA/an pour les petites écoles jusqu\'à 150 élèves, School à 120 000 FCFA/an jusqu\'à 500 élèves, et Premium à 250 000 FCFA/an pour un nombre illimité d\'élèves. Un essai gratuit de 30 jours est disponible sans carte bancaire.',
+      'Edukoo propose trois plans annuels en FCFA : Starter à 75 000 FCFA/an pour les petites écoles jusqu\'à 150 élèves, School à 200 000 FCFA/an jusqu\'à 500 élèves, et Premium à 400 000 FCFA/an pour un nombre illimité d\'élèves. Un essai gratuit de 30 jours est disponible sans carte bancaire.',
   },
   {
     question: 'Edukoo fonctionne-t-il pour les universités ?',
     answer:
-      'Oui. Edukoo est adapté aux universités et instituts privés. Vous pouvez créer autant de filières et de niveaux que nécessaire, gérer les étudiants, les paiements des frais universitaires et générer les relevés de notes.',
+      "Non, pas pour l'instant. Edukoo est pensé pour le secondaire : écoles primaires, collèges et lycées privés. La gestion universitaire (crédits ECTS, unités d'enseignement, jurys de délibération) n'est pas au programme.",
   },
   {
     question: 'Comment générer les bulletins de toute une classe en 1 clic ?',

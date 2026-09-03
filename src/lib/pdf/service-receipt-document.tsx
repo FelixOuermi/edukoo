@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
+import { getDictionary } from '@/lib/i18n'
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 11, fontFamily: 'Helvetica', color: '#1f2937' },
@@ -34,18 +35,6 @@ const styles = StyleSheet.create({
   footer: { marginTop: 40, borderTop: '1 solid #e5e7eb', paddingTop: 12, fontSize: 9, color: '#9ca3af', textAlign: 'center' },
 })
 
-const paymentMethodLabel: Record<string, string> = {
-  cash: 'Espèces',
-  orange_money: 'Orange Money',
-  moov_money: 'Moov Money',
-  transfer: 'Virement',
-}
-
-const serviceLabel: Record<string, string> = {
-  canteen: 'Cantine',
-  transport: 'Transport',
-}
-
 export interface ServiceReceiptData {
   schoolName: string
   schoolAddress?: string | null
@@ -69,6 +58,11 @@ function formatFCFA(amount: number) {
 
 export function ServiceReceiptDocument({ data }: { data: ServiceReceiptData }) {
   const formattedAmount = formatFCFA(data.amount)
+  const dict = getDictionary()
+  const t = dict.documents.receipt
+  const ts = dict.documents.serviceReceipt
+  const paymentMethodLabel: Record<string, string> = dict.paymentMethods
+  const serviceLabel: Record<string, string> = { canteen: ts.canteen, transport: ts.transport }
 
   return (
     <Document>
@@ -83,32 +77,34 @@ export function ServiceReceiptDocument({ data }: { data: ServiceReceiptData }) {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.receiptTitle}>REÇU — {serviceLabel[data.serviceType].toUpperCase()}</Text>
+            <Text style={styles.receiptTitle}>
+              {ts.titleTemplate.replace('{service}', serviceLabel[data.serviceType].toUpperCase())}
+            </Text>
             <Text style={styles.receiptNumber}>{data.receiptNumber}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.row}>
-            <Text style={styles.label}>Élève</Text>
+            <Text style={styles.label}>{t.student}</Text>
             <Text style={styles.value}>{data.studentName}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Classe</Text>
+            <Text style={styles.label}>{t.class}</Text>
             <Text style={styles.value}>{data.className ?? '—'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Période</Text>
+            <Text style={styles.label}>{ts.period}</Text>
             <Text style={styles.value}>
               {new Date(data.periodMonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
             </Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Mode de paiement</Text>
+            <Text style={styles.label}>{t.paymentMethod}</Text>
             <Text style={styles.value}>{paymentMethodLabel[data.paymentMethod] ?? data.paymentMethod}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>{t.date}</Text>
             <Text style={styles.value}>
               {new Date(data.paidAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </Text>
@@ -116,12 +112,12 @@ export function ServiceReceiptDocument({ data }: { data: ServiceReceiptData }) {
         </View>
 
         <View style={styles.amountBox}>
-          <Text style={styles.amountLabel}>Montant reçu</Text>
+          <Text style={styles.amountLabel}>{t.amountReceived}</Text>
           <Text style={styles.amountValue}>{formattedAmount} FCFA</Text>
         </View>
 
         <View style={styles.footer}>
-          <Text>Reçu généré par Edukoo — merci de conserver ce document.</Text>
+          <Text>{t.footer}</Text>
         </View>
       </Page>
     </Document>

@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import type { StudentBulletin } from '@/lib/bulletin'
+import { getDictionary } from '@/lib/i18n'
 
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, fontFamily: 'Helvetica', color: '#1f2937' },
@@ -79,6 +80,8 @@ export interface BulletinPdfData {
 
 function BulletinPage({ data }: { data: BulletinPdfData }) {
   const { schoolName, schoolAddress, schoolLogoUrl, schoolYearName, trimester, bulletin } = data
+  const dict = getDictionary()
+  const t = dict.documents.bulletin
 
   return (
       <Page size="A4" style={styles.page}>
@@ -91,9 +94,9 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.bulletinTitle}>BULLETIN DE NOTES</Text>
+            <Text style={styles.bulletinTitle}>{t.title}</Text>
             <Text style={styles.bulletinMeta}>
-              Trimestre {trimester} — Année {schoolYearName}
+              {t.periodTemplate.replace('{trimester}', String(trimester)).replace('{year}', schoolYearName)}
             </Text>
           </View>
         </View>
@@ -101,16 +104,16 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
         <View style={styles.studentBox}>
           <View>
             <Text style={styles.studentName}>{bulletin.studentName}</Text>
-            <Text style={styles.studentMeta}>Classe : {bulletin.className}</Text>
+            <Text style={styles.studentMeta}>{t.classLabel}{bulletin.className}</Text>
           </View>
         </View>
 
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, styles.colSubject]}>Matière</Text>
-            <Text style={[styles.tableHeaderText, styles.colCoef]}>Coefficient</Text>
-            <Text style={[styles.tableHeaderText, styles.colScore]}>Note /20</Text>
-            <Text style={[styles.tableHeaderText, styles.colWeighted]}>Moy. pondérée</Text>
+            <Text style={[styles.tableHeaderText, styles.colSubject]}>{t.subject}</Text>
+            <Text style={[styles.tableHeaderText, styles.colCoef]}>{t.coefficient}</Text>
+            <Text style={[styles.tableHeaderText, styles.colScore]}>{t.scoreOn20}</Text>
+            <Text style={[styles.tableHeaderText, styles.colWeighted]}>{t.weightedAverage}</Text>
           </View>
           {bulletin.subjects.map((sg) => (
             <View key={sg.subjectName} style={styles.tableRow}>
@@ -124,32 +127,39 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
 
         <View style={styles.totalsBox}>
           <View style={styles.totalItem}>
-            <Text style={styles.totalLabel}>Moyenne générale</Text>
+            <Text style={styles.totalLabel}>{t.generalAverage}</Text>
             <Text style={styles.totalValue}>
               {bulletin.average !== null ? bulletin.average.toFixed(2) : '—'}/20
             </Text>
           </View>
           <View style={styles.totalItem}>
-            <Text style={styles.totalLabel}>Rang</Text>
+            <Text style={styles.totalLabel}>{t.rank}</Text>
             <Text style={styles.totalValue}>{bulletin.rank !== null ? `${bulletin.rank}e` : '—'}</Text>
           </View>
           <View style={styles.totalItem}>
-            <Text style={styles.totalLabel}>Mention</Text>
+            <Text style={styles.totalLabel}>{t.mention}</Text>
             <Text style={styles.totalValue}>{bulletin.mention}</Text>
           </View>
           <View style={styles.totalItem}>
-            <Text style={styles.totalLabel}>Absences ({bulletin.absencesScope === 'period' ? 'période' : 'année'})</Text>
+            <Text style={styles.totalLabel}>
+              {t.absencesTemplate.replace(
+                '{scope}',
+                bulletin.absencesScope === 'period' ? t.absencesScopePeriod : t.absencesScopeYear
+              )}
+            </Text>
             <Text style={styles.totalValue}>
               {bulletin.absencesJustified + bulletin.absencesUnjustified}
             </Text>
             <Text style={{ fontSize: 7, color: '#9ca3af', marginTop: 2 }}>
-              dont {bulletin.absencesUnjustified} non justifiée{bulletin.absencesUnjustified > 1 ? 's' : ''}
+              {t.ofWhichUnjustifiedTemplate
+                .replace('{count}', String(bulletin.absencesUnjustified))
+                .replace('{plural}', bulletin.absencesUnjustified > 1 ? 's' : '')}
             </Text>
           </View>
         </View>
 
         <View style={styles.appreciationBox}>
-          <Text style={styles.appreciationLabel}>Appréciation</Text>
+          <Text style={styles.appreciationLabel}>{t.appreciation}</Text>
           {bulletin.appreciation ? (
             <Text style={{ fontSize: 10, color: '#1f2937', lineHeight: 1.5 }}>{bulletin.appreciation}</Text>
           ) : (
@@ -162,15 +172,15 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
 
         <View style={styles.signatureRow}>
           <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Cachet de l&apos;école</Text>
+            <Text style={styles.signatureLine}>{t.schoolStamp}</Text>
           </View>
           <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Signature du directeur</Text>
+            <Text style={styles.signatureLine}>{t.directorSignature}</Text>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <Text>Bulletin généré par Edukoo</Text>
+          <Text>{t.footer}</Text>
         </View>
       </Page>
   )

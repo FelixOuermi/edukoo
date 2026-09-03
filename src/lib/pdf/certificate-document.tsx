@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
+import { getDictionary } from '@/lib/i18n'
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 11, fontFamily: 'Helvetica', color: '#1f2937' },
@@ -34,6 +35,8 @@ export interface CertificateData {
 }
 
 export function CertificateDocument({ data }: { data: CertificateData }) {
+  const t = getDictionary().documents.common
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -58,15 +61,19 @@ export function CertificateDocument({ data }: { data: CertificateData }) {
 
         <View style={styles.signature}>
           <Text style={styles.signatureLine}>
-            Fait à {data.schoolName}, le{' '}
-            {new Date(data.issuedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            {t.madeAtTemplate
+              .replace('{school}', data.schoolName)
+              .replace(
+                '{date}',
+                new Date(data.issuedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+              )}
           </Text>
-          <Text style={styles.signatureLine}>Le Directeur / La Directrice</Text>
+          <Text style={styles.signatureLine}>{t.directorLine}</Text>
           {data.directorName && <Text style={styles.signatureName}>{data.directorName}</Text>}
         </View>
 
         <View style={styles.footer}>
-          <Text>Document généré par Edukoo.</Text>
+          <Text>{t.genericFooter}</Text>
         </View>
       </Page>
     </Document>

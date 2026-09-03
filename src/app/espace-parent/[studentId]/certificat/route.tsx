@@ -3,6 +3,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentParent, requireOwnChild } from '@/lib/portal'
 import { CertificateDocument } from '@/lib/pdf/certificate-document'
+import { getDictionary } from '@/lib/i18n'
 
 export async function GET(
   _request: Request,
@@ -10,9 +11,11 @@ export async function GET(
 ) {
   const { studentId } = await params
   const { parent, school, schoolYear } = await getCurrentParent()
+  const dict = getDictionary()
+  const t = dict.documents.certificate
 
   const owns = await requireOwnChild(parent.id, studentId)
-  if (!owns) return NextResponse.json({ error: 'Élève introuvable.' }, { status: 404 })
+  if (!owns) return NextResponse.json({ error: dict.errors.studentNotFound }, { status: 404 })
 
   const supabase = await createClient()
   const { data: student } = await supabase
@@ -22,12 +25,15 @@ export async function GET(
     .single()
 
   if (!student) {
-    return NextResponse.json({ error: 'Élève introuvable.' }, { status: 404 })
+    return NextResponse.json({ error: dict.errors.studentNotFound }, { status: 404 })
   }
 
-  const className = (student.classes as unknown as { name: string } | null)?.name ?? 'non affectée'
+  const className = (student.classes as unknown as { name: string } | null)?.name ?? t.classUnassigned
   const birthDateText = student.birth_date
-    ? `né(e) le ${new Date(student.birth_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}, `
+    ? t.bornOnTemplate.replace(
+        '{date}',
+        new Date(student.birth_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+      )
     : ''
 
   const buffer = await renderToBuffer(
@@ -37,10 +43,15 @@ export async function GET(
         schoolAddress: school.address,
         schoolPhone: school.phone,
         schoolLogoUrl: school.logo_url,
-        title: 'Certificat de scolarité',
+        title: t.schoolCertTitle,
         bodyLines: [
-          `Je soussigné(e), Directeur/Directrice de ${school.name}, atteste que l’élève ${student.first_name} ${student.last_name}, ${birthDateText}est régulièrement inscrit(e) dans notre établissement en classe de ${className}${schoolYear ? ` durant l’année scolaire ${schoolYear.name}` : ''}.`,
-          `Le présent certificat est délivré à l’intéressé(e) pour servir et valoir ce que de droit.`,
+          t.schoolCertBody1Template
+            .replace('{school}', school.name)
+            .replace('{student}', `${student.first_name} ${student.last_name}`)
+            .replace('{birthDate}', birthDateText)
+            .replace('{class}', className)
+            .replace('{yearSuffix}', schoolYear ? t.schoolYearSuffixTemplate.replace('{year}', schoolYear.name) : ''),
+          t.schoolCertBody2,
         ],
         issuedAt: new Date().toISOString(),
         directorName: school.director_name,
