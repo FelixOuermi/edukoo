@@ -29,7 +29,14 @@ export function OnboardingChecklist({
   const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
+    // setState synchrone dans l'effet, volontaire : on rend d'abord la
+    // checklist visible (identique au HTML serveur, pas de désync
+    // d'hydratation) puis on la masque après coup si localStorage dit
+    // qu'elle a déjà été fermée. Un lazy-initializer dans useState lirait
+    // localStorage dès le premier rendu client, qui différerait du HTML
+    // serveur (toujours rendu sans accès à localStorage).
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (localStorage.getItem(storageKey) === '1') setDismissed(true)
     } catch {
       // localStorage indisponible (navigation privée...) : on garde la checklist visible.

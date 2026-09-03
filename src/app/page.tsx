@@ -22,7 +22,7 @@ const ADVANTAGES = [
   { icon: MessageCircle, text: 'Absences et alertes WhatsApp' },
   { icon: CalendarDays, text: 'Emploi du temps & cahier de textes' },
   { icon: FileText, text: 'Certificats, attestations & convocations PDF' },
-  { icon: Smartphone, text: 'Paiements Orange Money et Moov Money' },
+  { icon: Smartphone, text: 'Suivi des paiements Orange Money et Moov Money' },
 ]
 
 const PLANS = [

@@ -12,11 +12,12 @@ export default async function DashboardLayout({
   const { school, role } = await getCurrentSchool()
 
   const isTrial = school.plan === 'trial'
+  // Server Component rendu une fois par requête : lire l'heure réelle ici est
+  // voulu (pas un souci d'idempotence de re-rendu côté client), d'où le disable.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now()
   const daysRemaining = school.trial_ends_at
-    ? Math.max(
-        0,
-        Math.ceil((new Date(school.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-      )
+    ? Math.max(0, Math.ceil((new Date(school.trial_ends_at).getTime() - now) / (1000 * 60 * 60 * 24)))
     : null
 
   const trialExpired = isTrial && school.trial_ends_at !== null && new Date(school.trial_ends_at) < new Date()
