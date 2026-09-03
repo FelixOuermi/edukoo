@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
 import { getDictionary } from '@/lib/i18n'
+import { MissingPrerequisiteNotice } from '@/components/missing-prerequisite-notice'
 import { NewSubscriptionForm, CancelSubscriptionButton } from './subscription-form'
 
 function formatFCFA(amount: number) {
@@ -17,7 +18,8 @@ export default async function ServicesPage({
   const serviceType = service === 'transport' ? 'transport' : 'canteen'
   const { school, schoolYear } = await requireDirector()
   const supabase = await createClient()
-  const t = getDictionary().servicesPage
+  const dict = getDictionary()
+  const t = dict.servicesPage
   const SERVICE_LABEL: Record<string, string> = { canteen: t.canteen, transport: t.transport }
 
   const [{ data: subscriptions }, { data: students }] = await Promise.all([
@@ -76,9 +78,12 @@ export default async function ServicesPage({
       </div>
 
       {!schoolYear ? (
-        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          {t.noSchoolYear}
-        </p>
+        <MissingPrerequisiteNotice
+          message={t.noSchoolYear}
+          actionLabel={dict.common.goToSettings}
+          href="/dashboard/parametres#annees-scolaires"
+          showAction={true}
+        />
       ) : (
         <>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">

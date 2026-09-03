@@ -163,7 +163,7 @@ export default async function DashboardPage() {
     {
       key: 'schoolYear',
       label: dict.onboarding.stepActivateSchoolYear,
-      href: '/dashboard/parametres',
+      href: '/dashboard/parametres#annees-scolaires',
       done: !!schoolYear,
     },
     { key: 'class', label: dict.onboarding.stepCreateClass, href: '/dashboard/classes', done: (classesCount ?? 0) > 0 },
@@ -176,11 +176,11 @@ export default async function DashboardPage() {
     {
       key: 'fees',
       label: dict.onboarding.stepFeeStructure,
-      href: '/dashboard/parametres',
+      href: '/dashboard/parametres#grille-tarifaire',
       done: (feeStructures ?? []).length > 0,
     },
     { key: 'grades', label: dict.onboarding.stepEnterGrades, href: '/dashboard/notes', done: (gradesCount ?? 0) > 0 },
-    { key: 'logo', label: dict.onboarding.stepAddLogo, href: '/dashboard/parametres', done: !!school.logo_url },
+    { key: 'logo', label: dict.onboarding.stepAddLogo, href: '/dashboard/parametres#logo', done: !!school.logo_url },
     {
       key: 'teacher',
       label: dict.onboarding.stepInviteTeacher,

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { DAY_LABELS, SCHOOL_DAYS } from '@/lib/timetable'
 import { getDictionary } from '@/lib/i18n'
+import { MissingPrerequisiteNotice } from '@/components/missing-prerequisite-notice'
 import { NewSlotForm, DeleteSlotButton } from './timetable-form'
 
 interface Slot {
@@ -65,9 +66,12 @@ export default async function EmploiDuTempsPage({
       <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
 
       {!schoolYear ? (
-        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          {t.noSchoolYear}
-        </p>
+        <MissingPrerequisiteNotice
+          message={t.noSchoolYear}
+          actionLabel={dict.common.goToSettings}
+          href="/dashboard/parametres#annees-scolaires"
+          showAction={isDirector}
+        />
       ) : (
         <>
           {isDirector ? (

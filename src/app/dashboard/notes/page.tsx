@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { getDictionary } from '@/lib/i18n'
+import { MissingPrerequisiteNotice } from '@/components/missing-prerequisite-notice'
 import { GradesForm } from './grades-form'
 import { ImportGradesButton } from './import-grades-button'
 
@@ -132,9 +133,12 @@ export default async function NotesPage({
           </form>
 
           {!schoolYear ? (
-            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-              {t.noSchoolYear}
-            </p>
+            <MissingPrerequisiteNotice
+              message={t.noSchoolYear}
+              actionLabel={dict.common.goToSettings}
+              href="/dashboard/parametres#annees-scolaires"
+              showAction={isDirector}
+            />
           ) : (gradeTypes ?? []).length === 0 ? (
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
               {t.noGradeTypesConfigured}

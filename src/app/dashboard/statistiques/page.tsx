@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireDirector } from '@/lib/school'
 import { computeSchoolStatistics } from '@/lib/statistics'
 import { getDictionary } from '@/lib/i18n'
+import { MissingPrerequisiteNotice } from '@/components/missing-prerequisite-notice'
 
 export default async function StatistiquesPage({
   searchParams,
@@ -32,9 +33,12 @@ export default async function StatistiquesPage({
       <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
 
       {!schoolYear ? (
-        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          {t.noSchoolYear}
-        </p>
+        <MissingPrerequisiteNotice
+          message={t.noSchoolYear}
+          actionLabel={dict.common.goToSettings}
+          href="/dashboard/parametres#annees-scolaires"
+          showAction={true}
+        />
       ) : (
         <>
           <form method="get" className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap gap-3 items-center">

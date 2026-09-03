@@ -35,13 +35,15 @@ export default async function ParametresPage() {
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
 
-      <LogoUploadForm currentLogoUrl={school.logo_url} />
+      <div id="logo" className="scroll-mt-6">
+        <LogoUploadForm currentLogoUrl={school.logo_url} />
+      </div>
 
       <SchoolInfoForm school={school} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div id="annees-scolaires" className="bg-white border border-gray-200 rounded-xl p-5 scroll-mt-6">
             <h2 className="font-semibold text-gray-900 mb-3">{t.schoolYearsTitle}</h2>
             <ul className="divide-y divide-gray-100">
               {(schoolYears ?? []).map((y) => (
@@ -65,7 +67,7 @@ export default async function ParametresPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div id="grille-tarifaire" className="bg-white border border-gray-200 rounded-xl p-5 scroll-mt-6">
             <h2 className="font-semibold text-gray-900 mb-3">{t.tariffGridByClass}</h2>
             {!schoolYear ? (
               <p className="text-sm text-amber-600">{t.activateSchoolYearForFees}</p>

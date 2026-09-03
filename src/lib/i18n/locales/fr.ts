@@ -28,6 +28,7 @@ const fr = {
     show: 'Afficher',
     back: 'Retour',
     logout: 'Déconnexion',
+    goToSettings: 'Aller dans Paramètres',
   },
   errors: {
     studentEmailRequired: 'Élève, nom et email sont requis.',
