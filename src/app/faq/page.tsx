@@ -12,7 +12,7 @@ const FAQS = [
   {
     question: "Qu'est-ce qu'Edukoo ?",
     answer:
-      "Edukoo est un logiciel de gestion scolaire en ligne conçu spécifiquement pour les écoles, collèges, lycées et universités privées d'Afrique francophone. Il permet de gérer les inscriptions, les paiements de scolarité en FCFA, les bulletins et les absences depuis n'importe quel appareil connecté à internet.",
+      "Edukoo est un logiciel de gestion scolaire en ligne conçu spécifiquement pour les écoles primaires, collèges et lycées privés d'Afrique francophone. Il permet de gérer les inscriptions, les paiements de scolarité en FCFA, les bulletins et les absences depuis n'importe quel appareil connecté à internet.",
   },
   {
     question: 'Edukoo fonctionne-t-il au Burkina Faso ?',

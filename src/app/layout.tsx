@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     "gestion école privée FCFA",
     "bulletin scolaire automatique",
     "suivi scolarité Ouagadougou",
-    "logiciel université privée Burkina",
+    "logiciel collège lycée privé Burkina",
     "gestion élèves Afrique",
     "paiement scolarité Orange Money",
     "logiciel école Côte Ivoire Sénégal",
