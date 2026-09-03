@@ -160,6 +160,12 @@ export default async function DashboardPage() {
   const topUnpaid = balances.sort((a, b) => b.due - a.due).slice(0, 5)
 
   const onboardingSteps: OnboardingStep[] = [
+    {
+      key: 'schoolYear',
+      label: dict.onboarding.stepActivateSchoolYear,
+      href: '/dashboard/parametres',
+      done: !!schoolYear,
+    },
     { key: 'class', label: dict.onboarding.stepCreateClass, href: '/dashboard/classes', done: (classesCount ?? 0) > 0 },
     {
       key: 'student',

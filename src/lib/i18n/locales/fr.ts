@@ -584,6 +584,7 @@ const fr = {
     title: "Prise en main d'Edukoo",
     stepsCompletedTemplate: '{done}/{total} étapes terminées',
     close: 'Fermer',
+    stepActivateSchoolYear: 'Activer une année scolaire',
     stepCreateClass: 'Créer votre première classe',
     stepEnrollStudent: 'Inscrire votre premier élève',
     stepFeeStructure: 'Configurer la grille tarifaire',
