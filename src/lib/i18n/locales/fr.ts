@@ -150,6 +150,10 @@ const fr = {
       submitting: 'Création...',
       alreadyHaveAccount: 'Déjà un compte ?',
       login: 'Se connecter',
+      termsPrefix: 'En créant votre école, vous acceptez nos',
+      termsCgu: "CGU",
+      termsAnd: 'et notre',
+      termsPrivacy: 'politique de confidentialité',
       pendingConfirmation:
         'Compte créé. Vérifiez votre boîte email pour confirmer votre adresse, puis connectez-vous.',
     },

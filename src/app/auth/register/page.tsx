@@ -101,6 +101,18 @@ export default function RegisterPage() {
             >
               {pending ? t.auth.register.submitting : t.auth.register.submit}
             </button>
+
+            <p className="text-center text-xs text-gray-400">
+              {t.auth.register.termsPrefix}{' '}
+              <Link href="/cgu" className="text-gray-600 hover:text-[#7c3aed] underline">
+                {t.auth.register.termsCgu}
+              </Link>{' '}
+              {t.auth.register.termsAnd}{' '}
+              <Link href="/confidentialite" className="text-gray-600 hover:text-[#7c3aed] underline">
+                {t.auth.register.termsPrivacy}
+              </Link>
+              .
+            </p>
           </form>
           )}
 

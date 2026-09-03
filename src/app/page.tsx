@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import {
-  GraduationCap,
   FileCheck,
   TrendingUp,
   MessageCircle,
@@ -12,6 +11,8 @@ import {
   Check,
   Quote,
 } from 'lucide-react'
+import { MarketingHeader } from '@/components/marketing-header'
+import { MarketingFooter } from '@/components/marketing-footer'
 
 const ADVANTAGES = [
   { icon: FileCheck, text: 'Bulletins générés en 1 clic' },
@@ -77,30 +78,7 @@ const TESTIMONIALS = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#7c3aed] flex items-center justify-center shrink-0">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-base sm:text-lg text-gray-900 truncate">Edukoo</span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Link
-              href="/auth/login"
-              className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap"
-            >
-              Connexion
-            </Link>
-            <Link
-              href="/auth/register"
-              className="text-sm font-medium bg-[#7c3aed] hover:bg-violet-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors whitespace-nowrap"
-            >
-              Essai gratuit
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader />
 
       <section className="bg-gradient-to-b from-violet-50 to-white py-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
@@ -223,20 +201,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-gray-100 py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#7c3aed] flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-gray-800">Edukoo</span>
-          </div>
-          <Link href="/faq" className="text-sm text-gray-500 hover:text-[#7c3aed] font-medium">
-            FAQ
-          </Link>
-          <p className="text-sm text-gray-400">© Edukoo 2026 — Gestion scolaire Afrique francophone</p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   )
 }
