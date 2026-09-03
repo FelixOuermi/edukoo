@@ -3,6 +3,7 @@ import { Users, TrendingUp, Wallet, CalendarX, Plus, ClipboardList, BookOpen } f
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { getDictionary } from '@/lib/i18n'
+import { OnboardingChecklist, type OnboardingStep } from '@/components/onboarding-checklist'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -11,32 +12,49 @@ function formatFCFA(amount: number) {
 export default async function DashboardPage() {
   const { school, schoolYear, role } = await getCurrentSchool()
   const supabase = await createClient()
-  const t = getDictionary().dashboardHome
+  const dict = getDictionary()
+  const t = dict.dashboardHome
   const today = new Date().toISOString().slice(0, 10)
   const isDirector = role === 'director'
 
-  const [{ data: students }, { data: feeStructures }, { data: payments }, { data: absencesToday }] =
-    await Promise.all([
-      supabase
-        .from('students')
-        .select('id, first_name, last_name, status, class_id, classes(name)')
-        .eq('school_id', school.id),
-      isDirector && schoolYear
-        ? supabase
-            .from('fee_structures')
-            .select('class_id, total_amount')
-            .eq('school_id', school.id)
-            .eq('school_year_id', schoolYear.id)
-        : Promise.resolve({ data: [] as { class_id: string; total_amount: number }[] }),
-      isDirector
-        ? supabase.from('fee_payments').select('student_id, amount').eq('school_id', school.id)
-        : Promise.resolve({ data: [] as { student_id: string; amount: number }[] }),
-      supabase
-        .from('absences')
-        .select('id, student_id, students(first_name, last_name)')
-        .eq('school_id', school.id)
-        .eq('absence_date', today),
-    ])
+  const [
+    { data: students },
+    { data: feeStructures },
+    { data: payments },
+    { data: absencesToday },
+    { count: classesCount },
+    { count: gradesCount },
+    { count: teachersCount },
+  ] = await Promise.all([
+    supabase
+      .from('students')
+      .select('id, first_name, last_name, status, class_id, classes(name)')
+      .eq('school_id', school.id),
+    isDirector && schoolYear
+      ? supabase
+          .from('fee_structures')
+          .select('class_id, total_amount')
+          .eq('school_id', school.id)
+          .eq('school_year_id', schoolYear.id)
+      : Promise.resolve({ data: [] as { class_id: string; total_amount: number }[] }),
+    isDirector
+      ? supabase.from('fee_payments').select('student_id, amount').eq('school_id', school.id)
+      : Promise.resolve({ data: [] as { student_id: string; amount: number }[] }),
+    supabase
+      .from('absences')
+      .select('id, student_id, students(first_name, last_name)')
+      .eq('school_id', school.id)
+      .eq('absence_date', today),
+    isDirector
+      ? supabase.from('classes').select('id', { count: 'exact', head: true }).eq('school_id', school.id)
+      : Promise.resolve({ count: 0 }),
+    isDirector
+      ? supabase.from('grades').select('id', { count: 'exact', head: true }).eq('school_id', school.id)
+      : Promise.resolve({ count: 0 }),
+    isDirector
+      ? supabase.from('teachers').select('id', { count: 'exact', head: true }).eq('school_id', school.id)
+      : Promise.resolve({ count: 0 }),
+  ])
 
   const activeStudents = (students ?? []).filter((s) => s.status === 'active')
 
@@ -141,6 +159,30 @@ export default async function DashboardPage() {
   const totalUnpaid = Math.max(totalExpected - totalCollected, 0)
   const topUnpaid = balances.sort((a, b) => b.due - a.due).slice(0, 5)
 
+  const onboardingSteps: OnboardingStep[] = [
+    { key: 'class', label: dict.onboarding.stepCreateClass, href: '/dashboard/classes', done: (classesCount ?? 0) > 0 },
+    {
+      key: 'student',
+      label: dict.onboarding.stepEnrollStudent,
+      href: '/dashboard/eleves/nouveau',
+      done: activeStudents.length > 0,
+    },
+    {
+      key: 'fees',
+      label: dict.onboarding.stepFeeStructure,
+      href: '/dashboard/parametres',
+      done: (feeStructures ?? []).length > 0,
+    },
+    { key: 'grades', label: dict.onboarding.stepEnterGrades, href: '/dashboard/notes', done: (gradesCount ?? 0) > 0 },
+    { key: 'logo', label: dict.onboarding.stepAddLogo, href: '/dashboard/parametres', done: !!school.logo_url },
+    {
+      key: 'teacher',
+      label: dict.onboarding.stepInviteTeacher,
+      href: '/dashboard/enseignants',
+      done: (teachersCount ?? 0) > 1,
+    },
+  ]
+
   const kpis = [
     {
       label: t.activeStudents,
@@ -190,6 +232,14 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      <OnboardingChecklist
+        schoolId={school.id}
+        title={dict.onboarding.title}
+        stepsCompletedTemplate={dict.onboarding.stepsCompletedTemplate}
+        closeLabel={dict.onboarding.close}
+        steps={onboardingSteps}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(({ label, value, icon: Icon, color }) => (

@@ -580,6 +580,17 @@ const fr = {
     booking: 'Réservation...',
     book: 'Réserver',
   },
+  onboarding: {
+    title: "Prise en main d'Edukoo",
+    stepsCompletedTemplate: '{done}/{total} étapes terminées',
+    close: 'Fermer',
+    stepCreateClass: 'Créer votre première classe',
+    stepEnrollStudent: 'Inscrire votre premier élève',
+    stepFeeStructure: 'Configurer la grille tarifaire',
+    stepEnterGrades: 'Saisir des notes',
+    stepAddLogo: "Ajouter le logo de l'école",
+    stepInviteTeacher: 'Inviter un enseignant',
+  },
   documents: {
     common: {
       madeAtTemplate: 'Fait à {school}, le {date}',
