@@ -50,24 +50,44 @@ export function OnboardingChecklist({
     setDismissed(true)
   }
 
+  const percent = Math.round((doneCount / steps.length) * 100)
+
   return (
-    <div className="bg-white rounded-xl border border-violet-200 overflow-hidden">
+    <div className="bg-gradient-to-br from-violet-50 to-white rounded-xl border border-violet-200 overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="flex-1 flex items-center justify-between gap-3 text-left"
+          className="flex-1 flex items-center gap-4 text-left"
         >
-          <div>
+          <div className="relative w-12 h-12 shrink-0">
+            <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+              <circle cx="18" cy="18" r="16" fill="none" stroke="#ede9fe" strokeWidth="4" />
+              <circle
+                cx="18"
+                cy="18"
+                r="16"
+                fill="none"
+                stroke="#7c3aed"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={`${percent} 100`}
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#7c3aed]">
+              {percent}%
+            </span>
+          </div>
+          <div className="min-w-0">
             <h2 className="font-semibold text-gray-900">{title}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {stepsCompletedTemplate.replace('{done}', String(doneCount)).replace('{total}', String(steps.length))}
             </p>
           </div>
           {collapsed ? (
-            <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+            <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 ml-auto" />
           ) : (
-            <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+            <ChevronUp className="w-4 h-4 text-gray-400 shrink-0 ml-auto" />
           )}
         </button>
         <button

@@ -100,7 +100,7 @@ export default async function CahierDeTextePage({
           {classId && subjectId ? (
             <>
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="w-full text-sm">
                   <thead className="bg-gray-50 text-gray-500 text-left">
                     <tr>
                       <th className="px-4 py-3 font-medium">{t.tableDate}</th>
@@ -146,7 +146,7 @@ export default async function CahierDeTextePage({
                       </tr>
                     )}
                   </tbody>
-                </table>
+                </table></div>
               </div>
 
               <NewLessonLogForm

@@ -195,7 +195,7 @@ export default async function EnfantPage({
           {(payments ?? []).length === 0 ? (
             <p className="text-sm text-gray-400">{dict.studentProfile.noPayments}</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="text-gray-500 text-left border-b border-gray-100">
                 <tr>
                   <th className="py-2 font-medium">{dict.studentProfile.tableReceipt}</th>
@@ -216,7 +216,7 @@ export default async function EnfantPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       </div>

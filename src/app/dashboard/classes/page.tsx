@@ -44,7 +44,7 @@ export default async function ClassesPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t.tableClass}</th>
@@ -70,14 +70,14 @@ export default async function ClassesPage({
                   </tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
           </div>
           <NewClassForm />
         </div>
 
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t.tableSubject}</th>
@@ -99,14 +99,14 @@ export default async function ClassesPage({
                   </tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
           </div>
           <NewSubjectForm />
         </div>
 
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t.tableGradeType}</th>
@@ -134,7 +134,7 @@ export default async function ClassesPage({
                   </tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
           </div>
           {isDirector && <NewGradeTypeForm />}
         </div>

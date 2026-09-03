@@ -28,7 +28,7 @@ export default async function SallesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t.tableRoom}</th>
@@ -54,14 +54,14 @@ export default async function SallesPage() {
                   </tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
           </div>
           <NewRoomForm />
         </div>
 
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t.tableDate}</th>
@@ -97,7 +97,7 @@ export default async function SallesPage() {
                   </tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
           </div>
 
           {(rooms ?? []).length > 0 && <NewBookingForm rooms={rooms ?? []} />}

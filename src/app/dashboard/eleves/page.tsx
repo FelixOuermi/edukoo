@@ -123,7 +123,7 @@ export default async function ElevesPage({
       </form>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
               <th className="px-4 py-3 font-medium">{t.students.tableRegistration}</th>
@@ -168,7 +168,7 @@ export default async function ElevesPage({
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   )

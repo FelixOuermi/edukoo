@@ -50,7 +50,7 @@ export function AbsencesForm({
         <input type="hidden" name="classId" value={classId} />
         <input type="hidden" name="date" value={date} />
 
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left border-b border-gray-100">
             <tr>
               <th className="px-4 py-3 font-medium">{t.tableStudent}</th>
@@ -96,7 +96,7 @@ export function AbsencesForm({
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
 
         <div className="px-4 py-4 border-t border-gray-100 flex items-center gap-4">
           <button

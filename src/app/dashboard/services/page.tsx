@@ -82,7 +82,7 @@ export default async function ServicesPage({
       ) : (
         <>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-4 py-3 font-medium">{t.tableStudent}</th>
@@ -130,7 +130,7 @@ export default async function ServicesPage({
                   </tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
           </div>
 
           <NewSubscriptionForm key={serviceType} students={studentOptions} serviceType={serviceType} />
