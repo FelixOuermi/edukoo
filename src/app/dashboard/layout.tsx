@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { Sidebar, MobileNav } from '@/components/sidebar'
 import { getCurrentSchool } from '@/lib/school'
 
@@ -16,6 +18,28 @@ export default async function DashboardLayout({
         Math.ceil((new Date(school.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
       )
     : null
+
+  const trialExpired = isTrial && school.trial_ends_at !== null && new Date(school.trial_ends_at) < new Date()
+  const paidExpired =
+    !isTrial && school.plan_expires_at !== null && new Date(school.plan_expires_at) < new Date()
+  const pathname = (await headers()).get('x-pathname') ?? ''
+  const isUpgradePage = pathname === '/dashboard/upgrade'
+
+  if ((trialExpired || paidExpired) && !isUpgradePage) {
+    if (role === 'director') redirect('/dashboard/upgrade')
+
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-sm text-center bg-white border border-gray-200 rounded-xl p-8">
+          <p className="text-lg font-semibold text-gray-900">Abonnement expiré</p>
+          <p className="text-sm text-gray-500 mt-2">
+            L&apos;essai gratuit ou l&apos;abonnement de {school.name} est arrivé à échéance. Merci de
+            contacter votre directeur ou directrice pour réactiver l&apos;accès.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
