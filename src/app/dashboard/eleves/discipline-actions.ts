@@ -18,6 +18,15 @@ export async function createDisciplinaryRecord(_prevState: unknown, formData: Fo
   if (!['remark', 'warning', 'detention', 'suspension'].includes(type)) return { error: t.invalidType }
 
   const supabase = await createClient()
+
+  const { data: student } = await supabase
+    .from('students')
+    .select('id')
+    .eq('id', studentId)
+    .eq('school_id', school.id)
+    .maybeSingle()
+  if (!student) return { error: t.studentNotFound }
+
   const { error } = await supabase.from('disciplinary_records').insert({
     school_id: school.id,
     student_id: studentId,

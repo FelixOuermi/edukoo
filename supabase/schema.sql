@@ -476,6 +476,60 @@ CREATE TABLE disciplinary_records (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Même garde-fou que guard_parent_students_school_consistency ci-dessus,
+-- appliqué à messages/disciplinary_records (référencent un student_id) et
+-- lesson_logs/timetable_slots (référencent un class_id) : empêche un
+-- directeur/enseignant d'insérer une ligne school_id = son école mais
+-- student_id/class_id d'une AUTRE école (ce que la RLS seule ne bloquait
+-- pas, et que les policies de lecture parent/élève, qui ne comparaient
+-- que la relation, auraient alors exposé aux vrais parents/élèves de
+-- l'école ciblée).
+CREATE OR REPLACE FUNCTION guard_row_student_school_consistency()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM students s
+    WHERE s.id = NEW.student_id AND s.school_id = NEW.school_id
+  ) THEN
+    RAISE EXCEPTION 'student_id doit appartenir à la même école.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION guard_row_class_school_consistency()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM classes c
+    WHERE c.id = NEW.class_id AND c.school_id = NEW.school_id
+  ) THEN
+    RAISE EXCEPTION 'class_id doit appartenir à la même école.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE TRIGGER messages_school_consistency_guard
+  BEFORE INSERT OR UPDATE ON messages
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_row_student_school_consistency();
+
+CREATE TRIGGER disciplinary_records_school_consistency_guard
+  BEFORE INSERT OR UPDATE ON disciplinary_records
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_row_student_school_consistency();
+
+CREATE TRIGGER lesson_logs_school_consistency_guard
+  BEFORE INSERT OR UPDATE ON lesson_logs
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_row_class_school_consistency();
+
+CREATE TRIGGER timetable_slots_school_consistency_guard
+  BEFORE INSERT OR UPDATE ON timetable_slots
+  FOR EACH ROW
+  EXECUTE FUNCTION guard_row_class_school_consistency();
+
 -- Provisionnement automatique école + enseignant à l'inscription
 -- (SECURITY DEFINER : contourne la RLS, s'exécute même sans session
 -- active, ce qui est nécessaire quand la confirmation d'email est activée)
@@ -899,6 +953,7 @@ CREATE POLICY "Parent read own children classes: timetable_slots"
       JOIN parent_students ps ON ps.student_id = s.id
       WHERE ps.parent_id = current_parent_id()
         AND s.class_id = timetable_slots.class_id
+        AND s.school_id = timetable_slots.school_id
     )
   );
 CREATE POLICY "Student read own class: timetable_slots"
@@ -908,6 +963,7 @@ CREATE POLICY "Student read own class: timetable_slots"
       SELECT 1 FROM students s
       WHERE s.id = current_student_id()
         AND s.class_id = timetable_slots.class_id
+        AND s.school_id = timetable_slots.school_id
     )
   );
 
@@ -951,8 +1007,10 @@ CREATE POLICY "Parent read own children: messages"
   USING (
     EXISTS (
       SELECT 1 FROM parent_students ps
+      JOIN students s ON s.id = ps.student_id
       WHERE ps.parent_id = current_parent_id()
         AND ps.student_id = messages.student_id
+        AND s.school_id = messages.school_id
     )
   );
 CREATE POLICY "Parent write own children: messages"
@@ -978,13 +1036,22 @@ CREATE POLICY "Parent read own children: disciplinary_records"
   USING (
     EXISTS (
       SELECT 1 FROM parent_students ps
+      JOIN students s ON s.id = ps.student_id
       WHERE ps.parent_id = current_parent_id()
         AND ps.student_id = disciplinary_records.student_id
+        AND s.school_id = disciplinary_records.school_id
     )
   );
 CREATE POLICY "Student read own: disciplinary_records"
   ON disciplinary_records FOR SELECT TO authenticated
-  USING (student_id = current_student_id());
+  USING (
+    student_id = current_student_id()
+    AND EXISTS (
+      SELECT 1 FROM students s
+      WHERE s.id = disciplinary_records.student_id
+        AND s.school_id = disciplinary_records.school_id
+    )
+  );
 
 -- Cahier de textes : écriture restreinte comme pour les notes (un
 -- enseignant ne peut écrire que sur ses classes/matières affectées),
@@ -1029,6 +1096,7 @@ CREATE POLICY "Parent read own children classes: lesson_logs"
       JOIN parent_students ps ON ps.student_id = s.id
       WHERE ps.parent_id = current_parent_id()
         AND s.class_id = lesson_logs.class_id
+        AND s.school_id = lesson_logs.school_id
     )
   );
 CREATE POLICY "Student read own class: lesson_logs"
@@ -1038,6 +1106,7 @@ CREATE POLICY "Student read own class: lesson_logs"
       SELECT 1 FROM students s
       WHERE s.id = current_student_id()
         AND s.class_id = lesson_logs.class_id
+        AND s.school_id = lesson_logs.school_id
     )
   );
 

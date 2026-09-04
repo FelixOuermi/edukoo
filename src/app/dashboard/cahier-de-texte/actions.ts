@@ -21,6 +21,12 @@ export async function createLessonLog(_prevState: unknown, formData: FormData) {
     return { error: t.classSubjectContentRequired }
   }
 
+  const [{ data: klass }, { data: subject }] = await Promise.all([
+    supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('subjects').select('id').eq('id', subjectId).eq('school_id', school.id).maybeSingle(),
+  ])
+  if (!klass || !subject) return { error: t.classOrSubjectNotFound }
+
   if (role !== 'director') {
     const { data: assigned } = await supabase
       .from('teacher_subjects')

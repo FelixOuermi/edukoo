@@ -5,6 +5,19 @@ import { sendSms } from '@/lib/sms'
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
 
+// studentName/subjectName viennent de saisies utilisateur (formulaire ou
+// import Excel) et sont réinjectés dans du HTML envoyé par email — un nom
+// contenant des balises ne doit pas pouvoir devenir un lien/contenu actif
+// dans l'email du parent.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 async function parentEmailsForStudent(supabase: SupabaseClient, studentId: string): Promise<string[]> {
   const { data } = await supabase.from('parent_students').select('parents(email)').eq('student_id', studentId)
   return (data ?? [])
@@ -29,13 +42,15 @@ export async function notifyGradesRecorded(
   if (entries.length === 0) return
   const emails = await parentEmailsForStudent(supabase, studentId)
   if (emails.length === 0) return
-  const list = entries.map((e) => `${e.gradeTypeName} : ${e.score}/${e.maxScore}`).join(', ')
+  const list = entries.map((e) => `${escapeHtml(e.gradeTypeName)} : ${e.score}/${e.maxScore}`).join(', ')
+  const safeName = escapeHtml(studentName)
+  const safeSubject = escapeHtml(subjectName)
   await Promise.all(
     emails.map((to) =>
       sendEmail({
         to,
         subject: `Nouvelle(s) note(s) — ${studentName}`,
-        html: `<p>Nouvelle(s) note(s) enregistrée(s) pour <strong>${studentName}</strong> en <strong>${subjectName}</strong> : ${list}.</p>`,
+        html: `<p>Nouvelle(s) note(s) enregistrée(s) pour <strong>${safeName}</strong> en <strong>${safeSubject}</strong> : ${list}.</p>`,
       })
     )
   )
@@ -53,12 +68,13 @@ export async function notifyAbsenceRecorded(
     parentPhonesForStudent(supabase, studentId),
   ])
   const justifiedText = justified ? 'justifiée' : 'non justifiée'
+  const safeName = escapeHtml(studentName)
   await Promise.all([
     ...emails.map((to) =>
       sendEmail({
         to,
         subject: `Absence enregistrée — ${studentName}`,
-        html: `<p>Une absence ${justifiedText} a été enregistrée pour <strong>${studentName}</strong> le ${date}.</p>`,
+        html: `<p>Une absence ${justifiedText} a été enregistrée pour <strong>${safeName}</strong> le ${date}.</p>`,
       })
     ),
     // SMS envoyé en complément de l'email : certains parents n'ont ni email
@@ -81,12 +97,13 @@ export async function notifyAbsenceThreshold(
     parentEmailsForStudent(supabase, studentId),
     parentPhonesForStudent(supabase, studentId),
   ])
+  const safeName = escapeHtml(studentName)
   await Promise.all([
     ...emails.map((to) =>
       sendEmail({
         to,
         subject: `Seuil d’absences atteint — ${studentName}`,
-        html: `<p><strong>${studentName}</strong> a atteint <strong>${count}</strong> absence(s) ce mois-ci (seuil fixé par l’école : ${threshold}). N’hésitez pas à contacter l’établissement.</p>`,
+        html: `<p><strong>${safeName}</strong> a atteint <strong>${count}</strong> absence(s) ce mois-ci (seuil fixé par l’école : ${threshold}). N’hésitez pas à contacter l’établissement.</p>`,
       })
     ),
     ...phones.map((to) =>
@@ -108,12 +125,13 @@ export async function notifyPaymentReceived(
   const emails = await parentEmailsForStudent(supabase, studentId)
   if (emails.length === 0) return
   const formatted = new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
+  const safeName = escapeHtml(studentName)
   await Promise.all(
     emails.map((to) =>
       sendEmail({
         to,
         subject: `Paiement reçu — ${studentName}`,
-        html: `<p>Nous avons bien reçu un paiement de <strong>${formatted}</strong> pour <strong>${studentName}</strong>${receiptNumber ? ` (reçu ${receiptNumber})` : ''}.</p>`,
+        html: `<p>Nous avons bien reçu un paiement de <strong>${formatted}</strong> pour <strong>${safeName}</strong>${receiptNumber ? ` (reçu ${escapeHtml(receiptNumber)})` : ''}.</p>`,
       })
     )
   )

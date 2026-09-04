@@ -14,6 +14,14 @@ export async function postStaffMessage(_prevState: unknown, formData: FormData) 
 
   const supabase = await createClient()
 
+  const { data: student } = await supabase
+    .from('students')
+    .select('id')
+    .eq('id', studentId)
+    .eq('school_id', school.id)
+    .maybeSingle()
+  if (!student) return { error: getDictionary().errors.studentNotFound }
+
   const { error } = await supabase.from('messages').insert({
     school_id: school.id,
     student_id: studentId,

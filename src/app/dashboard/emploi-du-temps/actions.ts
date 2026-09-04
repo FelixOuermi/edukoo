@@ -27,6 +27,16 @@ export async function createTimetableSlot(_prevState: unknown, formData: FormDat
 
   const supabase = await createClient()
 
+  const [{ data: klass }, { data: subject }, { data: teacher }] = await Promise.all([
+    supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle(),
+    supabase.from('subjects').select('id').eq('id', subjectId).eq('school_id', school.id).maybeSingle(),
+    teacherId
+      ? supabase.from('teachers').select('id').eq('id', teacherId).eq('school_id', school.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+  if (!klass || !subject) return { error: t.classOrSubjectNotFound }
+  if (teacherId && !teacher) return { error: t.classOrSubjectNotFound }
+
   const { data: existing } = await supabase
     .from('timetable_slots')
     .select('start_time, end_time, room, teacher_id, class_id')
