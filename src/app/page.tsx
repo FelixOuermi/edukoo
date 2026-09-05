@@ -9,7 +9,6 @@ import {
   CalendarDays,
   FileText,
   Check,
-  Quote,
 } from 'lucide-react'
 import { MarketingHeader } from '@/components/marketing-header'
 import { MarketingFooter } from '@/components/marketing-footer'
@@ -52,26 +51,21 @@ const PLANS = [
   },
 ]
 
-const TESTIMONIALS = [
+const PROBLEMS = [
   {
-    quote:
-      'Avant Edukoo, je passais 3 semaines à préparer les bulletins. Maintenant c\'est 1 journée pour 400 élèves.',
-    name: 'Madame Kaboré',
-    role: 'Directrice',
-    school: 'Lycée Privé Excellence, Ouagadougou',
+    icon: TrendingUp,
+    title: "Jusqu'à 30 % d'impayés",
+    text: "Sans suivi centralisé, les retards de paiement de scolarité pèsent lourd sur la trésorerie des écoles privées.",
   },
   {
-    quote:
-      'Le suivi des impayés a changé notre école. Nous avons récupéré 2 mois de retards en 3 semaines grâce aux alertes.',
-    name: 'Monsieur Traoré',
-    role: 'Directeur',
-    school: 'Collège Privé Horizon, Bobo-Dioulasso',
+    icon: FileCheck,
+    title: 'Des semaines sur les bulletins',
+    text: 'La saisie manuelle des notes et le calcul des moyennes prennent un temps considérable à chaque fin de trimestre.',
   },
   {
-    quote: "L'import Excel de nos 650 étudiants s'est fait en 10 minutes. Incroyable.",
-    name: 'Madame Sawadogo',
-    role: 'Secrétaire générale',
-    school: 'Institut Supérieur Privé de Gestion',
+    icon: MessagesSquare,
+    title: 'Une communication qui traîne',
+    text: "Prévenir chaque parent d'une absence ou d'un impayé, un par un, reste un vrai casse-tête au quotidien.",
   },
 ]
 
@@ -181,23 +175,28 @@ export default function LandingPage() {
 
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Ils font confiance à Edukoo
-          </h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900">Pourquoi Edukoo ?</h2>
+            <p className="text-gray-500 mt-3 max-w-2xl mx-auto">
+              Edukoo est né pour répondre à des problèmes bien réels, vécus au quotidien par les
+              écoles privées d&apos;Afrique francophone.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-7">
-                <Quote className="w-7 h-7 text-[#7c3aed] mb-4" />
-                <p className="text-gray-700 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <p className="font-semibold text-gray-900">{t.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {t.role}, {t.school}
-                  </p>
+            {PROBLEMS.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="bg-white border border-gray-200 rounded-2xl p-7">
+                <div className="w-10 h-10 rounded-lg bg-[#7c3aed] flex items-center justify-center mb-4">
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
+                <p className="font-semibold text-gray-900">{title}</p>
+                <p className="text-sm text-gray-500 mt-2 leading-relaxed">{text}</p>
               </div>
             ))}
           </div>
+          <p className="text-center text-sm text-gray-400 mt-10">
+            Edukoo est conçu et développé au Burkina Faso, pour les écoles d&apos;Afrique
+            francophone.
+          </p>
         </div>
       </section>
 
