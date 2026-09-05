@@ -14,7 +14,7 @@ export function MarketingHeader() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link
             href="/auth/login"
-            className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap"
           >
             Connexion
           </Link>
