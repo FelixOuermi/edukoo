@@ -123,6 +123,7 @@ export function PaymentForm({
             <option value="moov_money">{dict.paymentMethods.moov_money}</option>
             <option value="transfer">{dict.paymentMethods.transfer}</option>
           </select>
+          <p className="text-xs text-gray-400 mt-1">{t.paymentMethodHint}</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">{t.date}</label>

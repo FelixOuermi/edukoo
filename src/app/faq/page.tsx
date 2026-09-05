@@ -33,7 +33,7 @@ const FAQS = [
   {
     question: 'Edukoo supporte-t-il Orange Money et Moov Money ?',
     answer:
-      'Oui. Vous pouvez enregistrer les paiements reçus via Orange Money et Moov Money. Votre numéro Mobile Money apparaît sur les reçus et dans vos communications avec les parents, facilitant les règlements à distance.',
+      "Oui, mais pas comme une caisse en ligne : le parent règle par Orange Money, Moov Money ou en espèces en dehors de l'application, et le personnel de l'école enregistre ensuite ce paiement dans Edukoo, qui génère le reçu. Votre numéro Mobile Money apparaît sur les reçus et dans vos communications avec les parents, facilitant les règlements à distance.",
   },
   {
     question: "Comment notifier les parents d'une absence ?",

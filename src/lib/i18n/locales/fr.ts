@@ -367,6 +367,8 @@ const fr = {
     installment3: '3ème tranche',
     amountFcfa: 'Montant (FCFA)',
     paymentMethod: 'Mode de paiement',
+    paymentMethodHint:
+      "Ce paiement a déjà été reçu par un autre moyen (espèces, dépôt Orange/Moov Money...) ; vous l'enregistrez ici pour générer le reçu. Edukoo n'encaisse pas lui-même l'argent.",
     date: 'Date',
     saving: 'Enregistrement...',
     saveAndGenerateReceipt: 'Enregistrer le paiement et générer le reçu',
@@ -399,6 +401,8 @@ const fr = {
     periodMonth: 'Période (mois)',
     amountFcfa: 'Montant (FCFA)',
     paymentMethod: 'Mode de paiement',
+    paymentMethodHint:
+      "Ce paiement a déjà été reçu par un autre moyen (espèces, dépôt Orange/Moov Money...) ; vous l'enregistrez ici pour générer le reçu. Edukoo n'encaisse pas lui-même l'argent.",
     date: 'Date',
     saveAndGenerateReceipt: 'Enregistrer le paiement et générer le reçu',
     paymentRecorded: 'Paiement enregistré',
