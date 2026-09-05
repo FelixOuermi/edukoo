@@ -24,6 +24,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/dashboard/',
       },
     ],
-    sitemap: 'https://edukoo.vercel.app/sitemap.xml',
+    sitemap: 'https://edukoo.africa/sitemap.xml',
   }
 }

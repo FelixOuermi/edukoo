@@ -40,9 +40,9 @@ avant) :
 npm run test:e2e
 ```
 
-Contre la production (edukoo.vercel.app) :
+Contre la production (edukoo.africa) :
 ```
-PLAYWRIGHT_BASE_URL=https://edukoo.vercel.app npm run test:e2e
+PLAYWRIGHT_BASE_URL=https://edukoo.africa npm run test:e2e
 ```
 
 Mode debug/interactif (voir le navigateur, pas-à-pas) :

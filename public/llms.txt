@@ -31,9 +31,9 @@ WhatsApp aux parents.
 - Gestion multi-classes et matières
 
 ## Tarifs annuels en FCFA
-- Starter : 50 000 FCFA/an (150 élèves max)
-- School : 120 000 FCFA/an (500 élèves max)
-- Premium : 250 000 FCFA/an (élèves illimités)
+- Starter : 75 000 FCFA/an (150 élèves max)
+- School : 200 000 FCFA/an (500 élèves max)
+- Premium : 400 000 FCFA/an (élèves illimités)
 
 ## Marchés servis
 Burkina Faso, Côte d'Ivoire, Sénégal, Mali,
@@ -45,7 +45,7 @@ intégration native WhatsApp et Mobile Money
 pour l'Afrique francophone.
 
 ## URL principale
-https://edukoo.vercel.app
+https://edukoo.africa
 
 ## Secteur
 Edtech, SaaS, Gestion scolaire, Afrique francophone

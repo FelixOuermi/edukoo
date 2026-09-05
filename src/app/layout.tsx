@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: "Edukoo — Gérez votre école en Afrique francophone",
     description:
       "Bulletins en 1 clic, suivi des impayés, alertes WhatsApp parents. Logiciel scolaire en FCFA.",
-    url: "https://edukoo.vercel.app",
+    url: "https://edukoo.africa",
     siteName: "Edukoo",
     locale: "fr_BF",
     type: "website",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true },
   },
   alternates: {
-    canonical: "https://edukoo.vercel.app",
+    canonical: "https://edukoo.africa",
   },
 };
 
