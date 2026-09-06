@@ -52,27 +52,30 @@ export default async function NotesPage({
 
   const hasNoAssignment = !isDirector && assignedClassIds.size === 0
 
-  let students: { id: string; name: string; scores: Record<string, number | null> }[] = []
+  let students: { id: string; name: string; scores: Record<string, number | null>; appreciation: string | null }[] = []
 
   if (classId && subjectId && schoolYear) {
-    const { data: classStudents } = await supabase
-      .from('students')
-      .select('id, first_name, last_name')
-      .eq('class_id', classId)
-      .eq('status', 'active')
-      .order('last_name')
-
-    const { data: existingGrades } = await supabase
-      .from('grades')
-      .select('student_id, grade_type_id, score')
-      .eq('subject_id', subjectId)
-      .eq('school_year_id', schoolYear.id)
-      .eq('trimester', trimester)
+    const [{ data: classStudents }, { data: existingGrades }, { data: existingAppreciations }] = await Promise.all([
+      supabase.from('students').select('id, first_name, last_name').eq('class_id', classId).eq('status', 'active').order('last_name'),
+      supabase
+        .from('grades')
+        .select('student_id, grade_type_id, score')
+        .eq('subject_id', subjectId)
+        .eq('school_year_id', schoolYear.id)
+        .eq('trimester', trimester),
+      supabase
+        .from('bulletin_appreciations')
+        .select('student_id, appreciation')
+        .eq('subject_id', subjectId)
+        .eq('school_year_id', schoolYear.id)
+        .eq('trimester', trimester),
+    ])
 
     const scoreMap = new Map<string, number>()
     for (const g of existingGrades ?? []) {
       scoreMap.set(`${g.student_id}:${g.grade_type_id}`, Number(g.score))
     }
+    const appreciationMap = new Map((existingAppreciations ?? []).map((a) => [a.student_id, a.appreciation]))
 
     students = (classStudents ?? []).map((s) => ({
       id: s.id,
@@ -80,6 +83,7 @@ export default async function NotesPage({
       scores: Object.fromEntries(
         (gradeTypes ?? []).map((gt) => [gt.id, scoreMap.get(`${s.id}:${gt.id}`) ?? null])
       ),
+      appreciation: appreciationMap.get(s.id) ?? null,
     }))
   }
 

@@ -43,8 +43,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 6,
     paddingHorizontal: 8,
-    borderBottom: '1 solid #e5e7eb',
   },
+  tableRowWrap: { borderBottom: '1 solid #e5e7eb' },
+  subjectAppreciation: { fontSize: 8, color: '#6b7280', fontStyle: 'italic', paddingHorizontal: 8, paddingBottom: 5 },
   colSubject: { width: '40%' },
   colCoef: { width: '20%', textAlign: 'center' },
   colScore: { width: '20%', textAlign: 'center' },
@@ -116,11 +117,14 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
             <Text style={[styles.tableHeaderText, styles.colWeighted]}>{t.weightedAverage}</Text>
           </View>
           {bulletin.subjects.map((sg) => (
-            <View key={sg.subjectName} style={styles.tableRow}>
-              <Text style={styles.colSubject}>{sg.subjectName}</Text>
-              <Text style={styles.colCoef}>{sg.coefficient}</Text>
-              <Text style={styles.colScore}>{sg.score !== null ? sg.score.toFixed(2) : '—'}</Text>
-              <Text style={styles.colWeighted}>{sg.weighted !== null ? sg.weighted.toFixed(2) : '—'}</Text>
+            <View key={sg.subjectName} style={styles.tableRowWrap}>
+              <View style={styles.tableRow}>
+                <Text style={styles.colSubject}>{sg.subjectName}</Text>
+                <Text style={styles.colCoef}>{sg.coefficient}</Text>
+                <Text style={styles.colScore}>{sg.score !== null ? sg.score.toFixed(2) : '—'}</Text>
+                <Text style={styles.colWeighted}>{sg.weighted !== null ? sg.weighted.toFixed(2) : '—'}</Text>
+              </View>
+              {sg.appreciation && <Text style={styles.subjectAppreciation}>{sg.appreciation}</Text>}
             </View>
           ))}
         </View>

@@ -191,6 +191,66 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
   return { success: true, count: rows.length }
 }
 
+export async function saveSubjectAppreciation(
+  classId: string,
+  subjectId: string,
+  studentId: string,
+  trimester: number,
+  appreciation: string
+): Promise<{ error?: string; success?: boolean }> {
+  const { school, schoolYear, role, teacherId } = await getCurrentSchool()
+  const supabase = await createClient()
+  const t = getDictionary().errors
+
+  if (!schoolYear) return { error: t.noActiveSchoolYearSettings }
+  if (!(await assertTeacherAssigned(supabase, role, teacherId, classId, subjectId))) {
+    return { error: t.notAssignedToClassSubject }
+  }
+
+  const { data: student } = await supabase
+    .from('students')
+    .select('id')
+    .eq('id', studentId)
+    .eq('school_id', school.id)
+    .maybeSingle()
+  if (!student) return { error: t.studentNotFound }
+
+  // Pas d'upsert avec onConflict ici : la contrainte d'unicité par matière
+  // est un index partiel (WHERE subject_id IS NOT NULL, coexiste avec
+  // l'index partiel de l'appréciation générale ci-dessous) — Postgres
+  // n'infère pas un index partiel depuis ON CONFLICT (colonnes) sans y
+  // répéter la clause WHERE, ce que l'upsert de supabase-js ne permet pas
+  // d'exprimer. On cherche donc la ligne existante nous-mêmes.
+  const { data: existing } = await supabase
+    .from('bulletin_appreciations')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('school_year_id', schoolYear.id)
+    .eq('trimester', trimester)
+    .eq('subject_id', subjectId)
+    .maybeSingle()
+
+  const { error } = existing
+    ? await supabase
+        .from('bulletin_appreciations')
+        .update({ appreciation: appreciation.trim() || null, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+    : await supabase.from('bulletin_appreciations').insert({
+        school_id: school.id,
+        student_id: studentId,
+        subject_id: subjectId,
+        school_year_id: schoolYear.id,
+        trimester,
+        appreciation: appreciation.trim() || null,
+      })
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/notes')
+  revalidatePath('/dashboard/bulletins')
+  return { success: true }
+}
+
 interface ExcelGradeRow {
   Matricule?: string | number
   Nom?: string

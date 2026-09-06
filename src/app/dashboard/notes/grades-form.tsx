@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react'
 import { saveGrades } from './actions'
 import { getDictionary } from '@/lib/i18n'
 import { enqueueWrite, formDataToFields } from '@/lib/offline-queue'
+import { SubjectAppreciationCell } from './subject-appreciation-cell'
 
 const dict = getDictionary()
 const t = dict.notesPage
@@ -18,6 +19,7 @@ interface StudentRow {
   id: string
   name: string
   scores: Record<string, number | null>
+  appreciation: string | null
 }
 
 export function GradesForm({
@@ -130,6 +132,7 @@ export function GradesForm({
                 </th>
               ))}
               <th className="px-4 py-2 font-medium w-24 text-right">{t.average}</th>
+              <th className="px-4 py-2 font-medium">{t.subjectAppreciation}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -156,11 +159,20 @@ export function GradesForm({
                 <td className="px-4 py-2 text-right text-gray-600 font-medium">
                   {studentAverage(s.id) !== null ? studentAverage(s.id)!.toFixed(2) : '—'}
                 </td>
+                <td className="px-4 py-2">
+                  <SubjectAppreciationCell
+                    classId={classId}
+                    subjectId={subjectId}
+                    studentId={s.id}
+                    trimester={trimester}
+                    initialValue={s.appreciation}
+                  />
+                </td>
               </tr>
             ))}
             {students.length === 0 && (
               <tr>
-                <td colSpan={gradeTypes.length + 2} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={gradeTypes.length + 3} className="px-4 py-8 text-center text-gray-400">
                   {t.noStudentsInClass}
                 </td>
               </tr>

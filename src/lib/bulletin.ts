@@ -5,6 +5,7 @@ export interface SubjectGrade {
   coefficient: number
   score: number | null
   weighted: number | null
+  appreciation: string | null
 }
 
 export interface StudentBulletin {
@@ -121,7 +122,7 @@ export async function computeClassBulletins({
         : Promise.resolve({ data: [] as { student_id: string; subject_id: string; grade_type_id: string; score: number }[] }),
       supabase
         .from('bulletin_appreciations')
-        .select('student_id, appreciation')
+        .select('student_id, subject_id, appreciation')
         .eq('school_id', schoolId)
         .eq('school_year_id', schoolYearId)
         .eq('trimester', trimester),
@@ -139,7 +140,14 @@ export async function computeClassBulletins({
   const className = klass.name
   const weightByGradeType = new Map((gradeTypes ?? []).map((gt) => [gt.id, Number(gt.weight)]))
   const coefficientBySubject = new Map((classCoefficients ?? []).map((c) => [c.subject_id, c.coefficient]))
-  const appreciationByStudent = new Map((appreciations ?? []).map((a) => [a.student_id, a.appreciation]))
+  const appreciationByStudent = new Map(
+    (appreciations ?? []).filter((a) => a.subject_id === null).map((a) => [a.student_id, a.appreciation])
+  )
+  const appreciationByStudentAndSubject = new Map(
+    (appreciations ?? [])
+      .filter((a): a is typeof a & { subject_id: string } => a.subject_id !== null)
+      .map((a) => [`${a.student_id}:${a.subject_id}`, a.appreciation])
+  )
 
   const absencesByStudent = new Map<string, { justified: number; unjustified: number }>()
   for (const a of absences ?? []) {
@@ -177,6 +185,7 @@ export async function computeClassBulletins({
         coefficient,
         score,
         weighted: score !== null ? score * coefficient : null,
+        appreciation: appreciationByStudentAndSubject.get(`${s.id}:${subj.id}`) ?? null,
       }
     })
 

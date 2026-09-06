@@ -23,17 +23,32 @@ export async function saveAppreciation(
 
   if (!student) return { error: 'Élève introuvable.' }
 
-  const { error } = await supabase.from('bulletin_appreciations').upsert(
-    {
-      school_id: school.id,
-      student_id: studentId,
-      school_year_id: schoolYear.id,
-      trimester,
-      appreciation: appreciation.trim() || null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'student_id,school_year_id,trimester' }
-  )
+  // Pas d'upsert avec onConflict : l'unicité de l'appréciation générale est
+  // un index partiel (WHERE subject_id IS NULL, coexiste avec l'index
+  // partiel par matière de dashboard/notes/actions.ts) — Postgres n'infère
+  // pas un index partiel depuis ON CONFLICT (colonnes) sans y répéter la
+  // clause WHERE, ce que l'upsert de supabase-js ne permet pas d'exprimer.
+  const { data: existing } = await supabase
+    .from('bulletin_appreciations')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('school_year_id', schoolYear.id)
+    .eq('trimester', trimester)
+    .is('subject_id', null)
+    .maybeSingle()
+
+  const { error } = existing
+    ? await supabase
+        .from('bulletin_appreciations')
+        .update({ appreciation: appreciation.trim() || null, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+    : await supabase.from('bulletin_appreciations').insert({
+        school_id: school.id,
+        student_id: studentId,
+        school_year_id: schoolYear.id,
+        trimester,
+        appreciation: appreciation.trim() || null,
+      })
 
   if (error) return { error: error.message }
 

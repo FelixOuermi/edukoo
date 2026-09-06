@@ -35,6 +35,7 @@ const fr = {
   errors: {
     studentEmailRequired: 'Élève, nom et email sont requis.',
     studentNotFound: 'Élève introuvable.',
+    studentNameRequired: 'Le prénom et le nom sont requis.',
     parentAccountCreationFailed: 'Erreur lors de la création du compte parent.',
     parentAlreadyLinked: 'Ce parent est déjà lié à cet élève.',
     descriptionRequired: 'Description requise.',
@@ -224,6 +225,11 @@ const fr = {
     email: 'Email',
     enrolling: 'Inscription...',
     enrollSubmit: 'Inscrire',
+    editTitle: "Modifier l'élève",
+    backToStudentProfile: 'Retour à la fiche élève',
+    statusFieldLabel: 'Statut',
+    saving: 'Enregistrement...',
+    editSubmit: 'Enregistrer les modifications',
   },
   studentProfile: {
     noClass: 'Sans classe',
@@ -349,6 +355,8 @@ const fr = {
     unmatchedStudentsTemplate: ', {count} élève(s) non reconnu(s)',
     invalidScoresTemplate: ', {count} valeur(s) invalide(s) ignorée(s)',
     expectedColumns: 'Colonnes attendues : Matricule (ou Nom + Prenom), puis une colonne par type de note :',
+    subjectAppreciation: 'Appréciation (matière)',
+    subjectAppreciationPlaceholder: 'Appréciation...',
   },
   absencesPage: {
     title: 'Absences',

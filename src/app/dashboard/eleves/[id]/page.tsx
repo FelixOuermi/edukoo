@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { getDictionary } from '@/lib/i18n'
@@ -35,6 +35,12 @@ export default async function FicheElevePage({
     .single()
 
   if (!student) notFound()
+
+  const statusLabel: Record<string, string> = {
+    active: t.students.statusActive,
+    suspended: t.students.statusSuspended,
+    left: t.students.statusLeft,
+  }
 
   const [{ data: payments }, { data: grades }, { data: absences }, { data: parentLinks }] = await Promise.all([
     supabase
@@ -126,14 +132,22 @@ export default async function FicheElevePage({
             {student.registration_number} · {(student.classes as { name: string } | null)?.name ?? t.studentProfile.noClass}
           </p>
         </div>
-        {isDirector && (
+        <div className="flex flex-wrap gap-3">
           <Link
-            href={`/dashboard/scolarite/paiement?eleve=${student.id}`}
-            className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors w-fit"
+            href={`/dashboard/eleves/${student.id}/modifier`}
+            className="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-700 hover:border-[#7c3aed] hover:text-[#7c3aed] text-sm font-medium px-4 py-2.5 rounded-lg transition-colors w-fit"
           >
-            <Plus className="w-4 h-4" /> {t.studentProfile.recordPayment}
+            <Pencil className="w-4 h-4" /> {t.common.edit}
           </Link>
-        )}
+          {isDirector && (
+            <Link
+              href={`/dashboard/scolarite/paiement?eleve=${student.id}`}
+              className="inline-flex items-center gap-2 bg-[#7c3aed] hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors w-fit"
+            >
+              <Plus className="w-4 h-4" /> {t.studentProfile.recordPayment}
+            </Link>
+          )}
+        </div>
       </div>
 
       {atRisk && (
@@ -156,7 +170,7 @@ export default async function FicheElevePage({
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">{t.studentProfile.status}</dt>
-              <dd className="text-gray-800 capitalize">{student.status}</dd>
+              <dd className="text-gray-800">{statusLabel[student.status] ?? student.status}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">{t.studentProfile.parent}</dt>

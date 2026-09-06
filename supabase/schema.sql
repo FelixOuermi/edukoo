@@ -297,7 +297,10 @@ CREATE TABLE teacher_subjects (
   UNIQUE (teacher_id, class_id, subject_id)
 );
 
--- Appréciation générale d'un bulletin (élève × année scolaire × trimestre).
+-- Appréciation d'un bulletin (élève × année scolaire × trimestre) : générale
+-- (subject_id NULL) ou par matière (subject_id renseigné, rédigée par
+-- l'enseignant de la matière). Au plus une ligne générale et une ligne par
+-- matière et par élève/année/trimestre (index uniques partiels ci-dessous).
 CREATE TABLE bulletin_appreciations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   school_id UUID REFERENCES schools(id)
@@ -306,12 +309,19 @@ CREATE TABLE bulletin_appreciations (
     ON DELETE CASCADE,
   school_year_id UUID REFERENCES school_years(id)
     ON DELETE CASCADE,
+  subject_id UUID REFERENCES subjects(id)
+    ON DELETE CASCADE,
   trimester INTEGER CHECK (trimester BETWEEN 1 AND 6),
   appreciation TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE (student_id, school_year_id, trimester)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+CREATE UNIQUE INDEX bulletin_appreciations_general_unique
+  ON bulletin_appreciations (student_id, school_year_id, trimester)
+  WHERE subject_id IS NULL;
+CREATE UNIQUE INDEX bulletin_appreciations_subject_unique
+  ON bulletin_appreciations (student_id, school_year_id, trimester, subject_id)
+  WHERE subject_id IS NOT NULL;
 
 -- Journal d'audit : trace les actions sensibles (rôle, activation, suppression
 -- d'élève, paiement...) avec leur auteur, une description lisible et un
