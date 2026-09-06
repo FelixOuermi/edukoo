@@ -14,6 +14,10 @@ export interface StudentBulletin {
   subjects: SubjectGrade[]
   average: number | null
   rank: number | null
+  // Nombre d'élèves classés (moyenne non nulle) sur lesquels `rank` porte —
+  // un rang seul ("8e") est peu lisible sans savoir sur combien d'élèves ;
+  // exclut volontairement les élèves sans moyenne, comme le classement.
+  rankedOutOf: number
   mention: string
   appreciation: string | null
   absencesJustified: number
@@ -96,8 +100,14 @@ export async function computeClassBulletins({
 
   const studentIds = (students ?? []).map((s) => s.id)
 
-  const [{ data: subjects }, { data: classCoefficients }, { data: gradeTypes }, { data: grades }, { data: appreciations }, { data: absences }] =
-    await Promise.all([
+  const [
+    { data: subjects },
+    { data: classCoefficients },
+    { data: gradeTypes },
+    { data: grades },
+    { data: appreciations },
+    { data: absences },
+  ] = await Promise.all([
       supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
       supabase.from('class_subjects').select('subject_id, coefficient').eq('school_id', schoolId).eq('class_id', classId),
       supabase.from('grade_types').select('id, weight').eq('school_id', schoolId),
@@ -184,6 +194,7 @@ export async function computeClassBulletins({
       subjects: subjectGrades,
       average,
       rank: null,
+      rankedOutOf: 0,
       mention: mentionFor(average),
       appreciation: appreciationByStudent.get(s.id) ?? null,
       absencesJustified: absenceCounts.justified,
@@ -198,7 +209,10 @@ export async function computeClassBulletins({
 
   ranked.forEach((b, i) => {
     const target = bulletins.find((x) => x.studentId === b.studentId)
-    if (target) target.rank = i + 1
+    if (target) {
+      target.rank = i + 1
+      target.rankedOutOf = ranked.length
+    }
   })
 
   return { className, bulletins }

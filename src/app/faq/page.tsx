@@ -18,7 +18,7 @@ const FAQS = [
   {
     question: 'Edukoo fonctionne-t-il au Burkina Faso ?',
     answer:
-      "Oui, Edukoo est conçu en priorité pour le marché burkinabè. Tous les montants sont en FCFA, les paiements supportent Orange Money et Moov Money, et l'interface est disponible en français. Nous avons également des clients en Côte d'Ivoire, au Sénégal et au Mali.",
+      "Oui, Edukoo est conçu en priorité pour le marché burkinabè. Tous les montants sont en FCFA, les paiements supportent Orange Money et Moov Money, et l'interface est disponible en français. Le logiciel fonctionne tout aussi bien pour une école en Côte d'Ivoire, au Sénégal ou au Mali — même devise, même langue — mais notre développement reste concentré sur le Burkina Faso pour l'instant.",
   },
   {
     question: 'Comment générer les bulletins scolaires avec Edukoo ?',
@@ -68,7 +68,7 @@ const FAQS = [
   {
     question: 'Comment contacter le support Edukoo ?',
     answer:
-      'Notre support est disponible par WhatsApp du lundi au samedi de 8h à 18h (heure de Ouagadougou). Nous répondons généralement dans l\'heure pendant les heures ouvrables.',
+      'Notre support est disponible par WhatsApp du lundi au samedi de 8h à 18h (heure de Ouagadougou). Nous faisons de notre mieux pour répondre rapidement pendant ces horaires.',
   },
 ]
 

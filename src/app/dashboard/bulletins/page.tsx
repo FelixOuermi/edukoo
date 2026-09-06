@@ -107,7 +107,7 @@ export default async function BulletinsPage({
                   <td className="px-4 py-3 text-right text-gray-800">
                     {b.average !== null ? b.average.toFixed(2) : '—'}/20
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-600">{b.rank ?? '—'}</td>
+                  <td className="px-4 py-3 text-right text-gray-600">{b.rank !== null ? `${b.rank}/${b.rankedOutOf}` : '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{b.mention}</td>
                   <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
                     {b.absencesJustified + b.absencesUnjustified === 0

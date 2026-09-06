@@ -134,7 +134,9 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
           </View>
           <View style={styles.totalItem}>
             <Text style={styles.totalLabel}>{t.rank}</Text>
-            <Text style={styles.totalValue}>{bulletin.rank !== null ? `${bulletin.rank}e` : '—'}</Text>
+            <Text style={styles.totalValue}>
+              {bulletin.rank !== null ? `${bulletin.rank}e / ${bulletin.rankedOutOf}` : '—'}
+            </Text>
           </View>
           <View style={styles.totalItem}>
             <Text style={styles.totalLabel}>{t.mention}</Text>

@@ -9,6 +9,8 @@ import {
   CalendarDays,
   FileText,
   Check,
+  WifiOff,
+  AlertTriangle,
 } from 'lucide-react'
 import { MarketingHeader } from '@/components/marketing-header'
 import { MarketingFooter } from '@/components/marketing-footer'
@@ -22,6 +24,8 @@ const ADVANTAGES = [
   { icon: CalendarDays, text: 'Emploi du temps & cahier de textes' },
   { icon: FileText, text: 'Certificats, attestations & convocations PDF' },
   { icon: Smartphone, text: 'Suivi des paiements Orange Money et Moov Money' },
+  { icon: WifiOff, text: 'Fonctionne même en zone de connexion instable' },
+  { icon: AlertTriangle, text: 'Alerte précoce sur les élèves en difficulté' },
 ]
 
 const PLANS = [
