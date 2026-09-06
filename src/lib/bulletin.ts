@@ -29,6 +29,11 @@ export interface StudentBulletin {
   absencesJustified: number
   absencesUnjustified: number
   absencesScope: 'period' | 'year'
+  // Décision du conseil de classe : annuelle (par année scolaire, pas par
+  // trimestre) — voir class_council_decisions. null tant qu'elle n'a pas
+  // encore été prise.
+  councilDecision: 'passage' | 'redoublement' | 'passage_conditionnel' | null
+  councilComment: string | null
 }
 
 export function mentionFor(average: number | null) {
@@ -113,6 +118,7 @@ export async function computeClassBulletins({
     { data: grades },
     { data: appreciations },
     { data: absences },
+    { data: councilDecisions },
   ] = await Promise.all([
       supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
       supabase.from('class_subjects').select('subject_id, coefficient').eq('school_id', schoolId).eq('class_id', classId),
@@ -140,6 +146,13 @@ export async function computeClassBulletins({
             .gte('absence_date', absencesRange.start_date)
             .lte('absence_date', absencesRange.end_date)
         : Promise.resolve({ data: [] as { student_id: string; is_justified: boolean }[] }),
+      studentIds.length > 0
+        ? supabase
+            .from('class_council_decisions')
+            .select('student_id, decision, comment')
+            .in('student_id', studentIds)
+            .eq('school_year_id', schoolYearId)
+        : Promise.resolve({ data: [] as { student_id: string; decision: string | null; comment: string | null }[] }),
     ])
 
   const className = klass.name
@@ -153,6 +166,8 @@ export async function computeClassBulletins({
       .filter((a): a is typeof a & { subject_id: string } => a.subject_id !== null)
       .map((a) => [`${a.student_id}:${a.subject_id}`, a.appreciation])
   )
+
+  const councilDecisionByStudent = new Map((councilDecisions ?? []).map((d) => [d.student_id, d]))
 
   const absencesByStudent = new Map<string, { justified: number; unjustified: number }>()
   for (const a of absences ?? []) {
@@ -209,6 +224,7 @@ export async function computeClassBulletins({
     const average = totalCoef > 0 ? totalWeighted / totalCoef : null
 
     const absenceCounts = absencesByStudent.get(s.id) ?? { justified: 0, unjustified: 0 }
+    const councilDecision = councilDecisionByStudent.get(s.id)
 
     return {
       studentId: s.id,
@@ -223,6 +239,8 @@ export async function computeClassBulletins({
       absencesJustified: absenceCounts.justified,
       absencesUnjustified: absenceCounts.unjustified,
       absencesScope,
+      councilDecision: (councilDecision?.decision as StudentBulletin['councilDecision']) ?? null,
+      councilComment: councilDecision?.comment ?? null,
     }
   })
 

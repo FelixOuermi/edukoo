@@ -62,14 +62,25 @@ const styles = StyleSheet.create({
   totalItem: { alignItems: 'center' },
   totalLabel: { fontSize: 8, color: '#6b7280' },
   totalValue: { fontSize: 14, fontWeight: 700, color: '#4c1d95', marginTop: 2 },
-  appreciationBox: { marginBottom: 30 },
+  appreciationBox: { marginBottom: 20 },
   appreciationLabel: { fontSize: 9, fontWeight: 700, color: '#374151', marginBottom: 4 },
   appreciationLine: { borderBottom: '1 solid #d1d5db', height: 16 },
+  councilBox: { backgroundColor: '#f5f3ff', borderRadius: 6, padding: 12, marginBottom: 20 },
+  councilLabel: { fontSize: 9, fontWeight: 700, color: '#374151', marginBottom: 4 },
+  councilValue: { fontSize: 12, fontWeight: 700, color: '#4c1d95' },
+  councilComment: { fontSize: 9, color: '#6b7280', marginTop: 4 },
   signatureRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
   signatureBox: { width: '45%', textAlign: 'center' },
   signatureLine: { borderTop: '1 solid #9ca3af', marginTop: 30, paddingTop: 4, fontSize: 8, color: '#6b7280' },
   footer: { marginTop: 24, fontSize: 8, color: '#9ca3af', textAlign: 'center' },
 })
+
+function councilDecisionLabel(decision: StudentBulletin['councilDecision'], t: ReturnType<typeof getDictionary>['documents']['bulletin']) {
+  if (decision === 'passage') return t.councilDecisionPassage
+  if (decision === 'redoublement') return t.councilDecisionRedoublement
+  if (decision === 'passage_conditionnel') return t.councilDecisionConditional
+  return null
+}
 
 export interface BulletinPdfData {
   schoolName: string
@@ -178,6 +189,14 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
             </>
           )}
         </View>
+
+        {bulletin.councilDecision && (
+          <View style={styles.councilBox}>
+            <Text style={styles.councilLabel}>{t.councilDecisionLabel}</Text>
+            <Text style={styles.councilValue}>{councilDecisionLabel(bulletin.councilDecision, t)}</Text>
+            {bulletin.councilComment && <Text style={styles.councilComment}>{bulletin.councilComment}</Text>}
+          </View>
+        )}
 
         <View style={styles.signatureRow}>
           <View style={styles.signatureBox}>

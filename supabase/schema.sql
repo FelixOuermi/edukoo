@@ -509,6 +509,23 @@ CREATE TABLE payroll_payments (
   created_by UUID REFERENCES auth.users(id)
 );
 
+-- Décision du conseil de classe (passage/redoublement) : une ligne par
+-- élève et par année scolaire (décision annuelle, pas par trimestre).
+CREATE TABLE class_council_decisions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  student_id UUID REFERENCES students(id)
+    ON DELETE CASCADE,
+  school_year_id UUID REFERENCES school_years(id)
+    ON DELETE CASCADE,
+  decision TEXT CHECK (decision IN ('passage', 'redoublement', 'passage_conditionnel')),
+  comment TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (student_id, school_year_id)
+);
+
 -- Gestion des salles comme ressource réservable : distinct de
 -- timetable_slots.room (texte libre, cours récurrents) — ceci couvre les
 -- réservations ponctuelles. Purement interne au personnel, pas de policy
@@ -776,6 +793,7 @@ ALTER TABLE education_levels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_usage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE staff_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payroll_payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE class_council_decisions ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
 -- la RLS de `teachers` en interne, donc pas de récursion avec la policy
@@ -1340,6 +1358,34 @@ CREATE POLICY "Director only: payroll_payments"
   ON payroll_payments FOR ALL TO authenticated
   USING (school_id = current_school_id() AND current_teacher_role() = 'director')
   WITH CHECK (school_id = current_school_id() AND current_teacher_role() = 'director');
+
+-- Décision du conseil de classe : lecture ouverte à tout le personnel de
+-- l'école (et au parent/élève concernés), écriture réservée au directeur.
+CREATE POLICY "School isolation read: class_council_decisions"
+  ON class_council_decisions FOR SELECT TO authenticated
+  USING (school_id = current_school_id());
+CREATE POLICY "Director insert: class_council_decisions"
+  ON class_council_decisions FOR INSERT TO authenticated
+  WITH CHECK (school_id = current_school_id() AND current_teacher_role() = 'director');
+CREATE POLICY "Director update: class_council_decisions"
+  ON class_council_decisions FOR UPDATE TO authenticated
+  USING (school_id = current_school_id() AND current_teacher_role() = 'director')
+  WITH CHECK (school_id = current_school_id() AND current_teacher_role() = 'director');
+CREATE POLICY "Director delete: class_council_decisions"
+  ON class_council_decisions FOR DELETE TO authenticated
+  USING (school_id = current_school_id() AND current_teacher_role() = 'director');
+CREATE POLICY "Parent read own children: class_council_decisions"
+  ON class_council_decisions FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM parent_students ps
+      WHERE ps.parent_id = current_parent_id()
+        AND ps.student_id = class_council_decisions.student_id
+    )
+  );
+CREATE POLICY "Student read own: class_council_decisions"
+  ON class_council_decisions FOR SELECT TO authenticated
+  USING (student_id = current_student_id());
 
 -- Salles : purement interne au personnel.
 CREATE POLICY "School isolation: rooms"

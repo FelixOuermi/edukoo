@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { computeClassBulletins } from '@/lib/bulletin'
 import { AppreciationCell } from './appreciation-cell'
+import { ClassCouncilCell } from './class-council-cell'
 import { Download } from 'lucide-react'
 
 export default async function BulletinsPage({
@@ -117,6 +118,7 @@ export default async function BulletinsPage({
                   Absences ({result?.bulletins[0]?.absencesScope === 'period' ? 'période' : 'année'})
                 </th>
                 <th className="px-4 py-3 font-medium">Appréciation</th>
+                <th className="px-4 py-3 font-medium">Décision (année)</th>
                 <th className="px-4 py-3 font-medium text-right">Bulletin</th>
               </tr>
             </thead>
@@ -137,6 +139,14 @@ export default async function BulletinsPage({
                   <td className="px-4 py-3">
                     <AppreciationCell studentId={b.studentId} trimester={trimester} initialValue={b.appreciation} />
                   </td>
+                  <td className="px-4 py-3">
+                    <ClassCouncilCell
+                      studentId={b.studentId}
+                      isDirector={isDirector}
+                      initialDecision={b.councilDecision}
+                      initialComment={b.councilComment}
+                    />
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <a
                       href={`/dashboard/bulletins/eleve/${b.studentId}/pdf?trimestre=${trimester}`}
@@ -151,7 +161,7 @@ export default async function BulletinsPage({
               ))}
               {(result?.bulletins ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400">
                     Aucun élève dans cette classe.
                   </td>
                 </tr>
