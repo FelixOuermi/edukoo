@@ -22,6 +22,7 @@ import {
   DoorOpen,
   HelpCircle,
   Banknote,
+  FileText,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 import type { TeacherRole } from '@/lib/school'
@@ -35,7 +36,8 @@ const NAV_ITEMS = [
   { href: '/dashboard/classes', label: t.nav.classes, icon: BookOpen, directorOnly: false },
   { href: '/dashboard/scolarite', label: t.nav.tuition, icon: Wallet, directorOnly: true },
   { href: '/dashboard/services', label: t.nav.services, icon: Bus, directorOnly: true },
-  { href: '/dashboard/bulletins', label: t.nav.grades, icon: ClipboardList, directorOnly: false },
+  { href: '/dashboard/notes', label: t.nav.notes, icon: ClipboardList, directorOnly: false },
+  { href: '/dashboard/bulletins', label: t.nav.grades, icon: FileText, directorOnly: false },
   { href: '/dashboard/cahier-de-texte', label: t.nav.lessonLog, icon: NotebookPen, directorOnly: false },
   { href: '/dashboard/statistiques', label: t.nav.statistics, icon: BarChart3, directorOnly: true },
   { href: '/dashboard/absences', label: t.nav.absences, icon: CalendarX, directorOnly: false },

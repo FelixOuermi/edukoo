@@ -135,6 +135,10 @@ Décision du 2026-09-06 : module séparé de "Enseignants" (pas une extension), 
 - [x] Nouvelle entrée de navigation "Personnel & Paie" (director only)
 - Testé en navigateur de bout en bout sur données réelles : migration exécutée en production, ajout d'un membre du personnel de test, enregistrement d'un paiement (reçu `REC-2026-1029` généré), PDF vérifié (chargement sans erreur), puis paiement/membre/entrées de journal d'audit de test supprimés directement en base.
 
+### Correction — navigation Notes/Bulletins ✅ terminé
+Signalé par l'utilisateur le 2026-09-06 : le lien de menu "Notes & Bulletins" ne menait qu'à `dashboard/bulletins` (consultation/impression) — la page de saisie des notes (`dashboard/notes`) n'avait aucun lien de menu, seulement un raccourci sur l'accueil du tableau de bord et dans la checklist d'onboarding. Un enseignant cherchant "où saisir mes notes" cliquait sur le seul lien "Notes" visible et tombait sur une page de consultation vide.
+- [x] Séparé en deux entrées de menu distinctes : "Notes" (`dashboard/notes`) et "Bulletins" (`dashboard/bulletins`) — `src/components/sidebar.tsx`, `src/lib/i18n/locales/fr.ts`. Vérifié en navigateur.
+
 ### ⚪ Hors périmètre (décidé)
 Décision prise le 2026-09-03 : Edukoo reste 100% secondaire (collège/lycée). Le volet universitaire (ECTS, UE, jurys, inscription à la carte) est **écarté de la feuille de route** — pas de tâches à prévoir dessus. Le tableau comparatif universitaire plus haut est conservé uniquement comme référence historique de l'analyse.
 
