@@ -4,10 +4,12 @@ import { ArrowLeft, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { getDictionary } from '@/lib/i18n'
+import { computeAtRiskStudents, type AtRiskFactorKey } from '@/lib/at-risk'
 import { ParentSection } from '../parent-section'
 import { MessageThread } from '../message-thread'
 import { AbsenceRow } from '../absence-row'
 import { DisciplineSection } from '../discipline-section'
+import { AtRiskPanel } from '../at-risk-panel'
 
 function formatFCFA(amount: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA'
@@ -19,7 +21,7 @@ export default async function FicheElevePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { school, role } = await getCurrentSchool()
+  const { school, role, schoolYear } = await getCurrentSchool()
   const supabase = await createClient()
   const t = getDictionary()
   const paymentMethodLabel: Record<string, string> = t.paymentMethods
@@ -77,6 +79,38 @@ export default async function FicheElevePage({
     gradesByTrimester.set(g.trimester, list)
   }
 
+  // Signalement "à surveiller" : sur le dernier trimestre où l'élève a des
+  // notes (à défaut le 1er), limité à sa classe — même calcul que la vue
+  // direction (dashboard/statistiques), périmètre réduit à cet élève.
+  const latestTrimesterWithGrades = gradesByTrimester.size > 0 ? Math.max(...gradesByTrimester.keys()) : 1
+  const atRisk =
+    isDirector && schoolYear && student.class_id
+      ? (
+          await computeAtRiskStudents({
+            schoolId: school.id,
+            schoolYearId: schoolYear.id,
+            trimester: latestTrimesterWithGrades,
+            absenceAlertThreshold: school.absence_alert_threshold,
+            classId: student.class_id,
+          })
+        ).find((s) => s.studentId === student.id)
+      : undefined
+
+  const factorLabel = (key: AtRiskFactorKey) => {
+    switch (key) {
+      case 'averageDrop':
+        return t.statisticsPage.atRiskFactorAverageDropTemplate
+          .replace('{previous}', atRisk?.previousAverage?.toFixed(1) ?? '—')
+          .replace('{current}', atRisk?.average?.toFixed(1) ?? '—')
+      case 'lowAverage':
+        return t.statisticsPage.atRiskFactorLowAverage
+      case 'highAbsences':
+        return t.statisticsPage.atRiskFactorHighAbsences
+      case 'discipline':
+        return t.statisticsPage.atRiskFactorDisciplineTemplate.replace('{count}', String(atRisk?.disciplineCount ?? 0))
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Link href="/dashboard/eleves" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
@@ -101,6 +135,16 @@ export default async function FicheElevePage({
           </Link>
         )}
       </div>
+
+      {atRisk && (
+        <AtRiskPanel
+          studentId={student.id}
+          classId={student.class_id}
+          trimester={latestTrimesterWithGrades}
+          factorLabels={atRisk.factors.map((f) => factorLabel(f))}
+          title={t.statisticsPage.atRiskTitle}
+        />
+      )}
 
       <div className={`grid grid-cols-1 gap-6 ${isDirector ? 'lg:grid-cols-3' : ''}`}>
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">

@@ -38,6 +38,46 @@ export async function saveAbsences(_prevState: unknown, formData: FormData) {
   const validStudentIds = new Set((validStudents ?? []).map((s) => s.id))
   const studentNameById = new Map((validStudents ?? []).map((s) => [s.id, `${s.first_name} ${s.last_name}`]))
 
+  // Rejeu d'une saisie mise en attente hors-ligne (src/lib/offline-queue.ts) :
+  // __offlineSnapshot contient, par élève, l'état "absent:justifié" vu à
+  // l'écran au moment de la saisie ("true:false"). S'il diffère de l'état
+  // serveur actuel pour cette classe/date, quelqu'un d'autre a modifié
+  // l'appel entre-temps — on écrase quand même (dernier arrivé gagne) mais
+  // on trace le conflit dans le journal d'audit avant l'écrasement.
+  const offlineSnapshotRaw = formData.get('__offlineSnapshot') as string | null
+  if (offlineSnapshotRaw) {
+    try {
+      const snapshot = JSON.parse(offlineSnapshotRaw) as Record<string, string>
+      const { data: currentAbsences } = await supabase
+        .from('absences')
+        .select('student_id, is_justified')
+        .eq('school_id', school.id)
+        .eq('class_id', classId)
+        .eq('absence_date', date)
+      const currentByStudent = new Map((currentAbsences ?? []).map((a) => [a.student_id, a.is_justified]))
+
+      for (const studentId of studentIds) {
+        if (!(studentId in snapshot)) continue
+        const currentJustified = currentByStudent.get(studentId)
+        const currentStr = `${currentByStudent.has(studentId)}:${currentJustified ?? false}`
+        if (currentStr !== snapshot[studentId]) {
+          const newAbsent = formData.get(`absent_${studentId}`) === 'on'
+          const newJustified = formData.get(`justified_${studentId}`) === 'on'
+          await logAction(
+            supabase,
+            school.id,
+            actorName,
+            'Conflit de synchronisation hors-ligne',
+            `Absence du ${date} pour ${studentNameById.get(studentId) ?? 'élève'} : état serveur "${currentStr}" remplacé par "${newAbsent}:${newJustified}" saisi hors-ligne.`
+          )
+        }
+      }
+    } catch {
+      // Snapshot corrompu/illisible : on ignore la détection de conflit
+      // plutôt que de bloquer l'enregistrement.
+    }
+  }
+
   await supabase
     .from('absences')
     .delete()

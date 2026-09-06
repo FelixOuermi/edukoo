@@ -25,7 +25,7 @@ export async function GET() {
     { data: schoolYears },
   ] = await Promise.all([
     supabase.from('students').select('*, classes(name)').eq('school_id', school.id).order('last_name'),
-    supabase.from('classes').select('*').eq('school_id', school.id).order('name'),
+    supabase.from('classes').select('*, education_levels(name)').eq('school_id', school.id).order('name'),
     supabase.from('subjects').select('*').eq('school_id', school.id).order('name'),
     supabase.from('teachers').select('name, phone, email, role, is_active').eq('school_id', school.id).order('name'),
     supabase.from('grade_types').select('name, weight').eq('school_id', school.id).order('created_at'),
@@ -64,7 +64,7 @@ export async function GET() {
 
   const classesSheet = (classes ?? []).map((c) => ({
     [t.nameHeader]: c.name,
-    [t.levelHeader]: c.level,
+    [t.levelHeader]: (c.education_levels as unknown as { name: string } | null)?.name ?? c.level,
     [t.maxStudentsHeader]: c.max_students,
   }))
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(classesSheet), t.sheetClasses)

@@ -52,6 +52,33 @@ CREATE TABLE periods (
   CHECK (end_date > start_date)
 );
 
+-- Référentiel cycle → niveau (post-primaire, secondaire général,
+-- technique/pro...), par école : les séries technique/pro varient trop
+-- d'un établissement à l'autre pour un référentiel national unique.
+-- Chaque école part avec un jeu par défaut (secondaire général
+-- burkinabè), voir seed_default_education_levels() plus bas.
+CREATE TABLE education_cycles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (school_id, name)
+);
+
+CREATE TABLE education_levels (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  cycle_id UUID REFERENCES education_cycles(id)
+    ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (cycle_id, name)
+);
+
 -- Classes
 CREATE TABLE classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -60,7 +87,11 @@ CREATE TABLE classes (
   school_year_id UUID REFERENCES school_years(id)
     ON DELETE CASCADE,
   name TEXT NOT NULL,
+  -- Texte libre historique, conservé en repli d'affichage pour les
+  -- classes jamais rattachées à un niveau structuré (education_level_id).
   level TEXT,
+  education_level_id UUID REFERENCES education_levels(id)
+    ON DELETE SET NULL,
   max_students INTEGER DEFAULT 50,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -533,6 +564,44 @@ CREATE TRIGGER timetable_slots_school_consistency_guard
 -- Provisionnement automatique école + enseignant à l'inscription
 -- (SECURITY DEFINER : contourne la RLS, s'exécute même sans session
 -- active, ce qui est nécessaire quand la confirmation d'email est activée)
+-- Seed par défaut (secondaire général burkinabè) posé sur toute nouvelle
+-- école. Le cycle technique/pro démarre sans niveau prérempli : les
+-- séries (G1, G2, F1-F4, CAP, BEP...) sont trop spécifiques à chaque
+-- lycée technique pour un défaut national fiable — le directeur les
+-- ajoute lui-même depuis Classes & Matières.
+CREATE OR REPLACE FUNCTION seed_default_education_levels(target_school_id UUID)
+RETURNS VOID AS $$
+DECLARE
+  post_primaire_id UUID;
+  secondaire_id UUID;
+BEGIN
+  INSERT INTO education_cycles (school_id, name, display_order)
+  VALUES (target_school_id, 'Post-primaire', 1)
+  RETURNING id INTO post_primaire_id;
+
+  INSERT INTO education_cycles (school_id, name, display_order)
+  VALUES (target_school_id, 'Secondaire général', 2)
+  RETURNING id INTO secondaire_id;
+
+  INSERT INTO education_cycles (school_id, name, display_order)
+  VALUES (target_school_id, 'Enseignement technique et professionnel', 3);
+
+  INSERT INTO education_levels (school_id, cycle_id, name, display_order) VALUES
+    (target_school_id, post_primaire_id, '6e', 1),
+    (target_school_id, post_primaire_id, '5e', 2),
+    (target_school_id, post_primaire_id, '4e', 3),
+    (target_school_id, post_primaire_id, '3e', 4),
+    (target_school_id, secondaire_id, '2nde A', 1),
+    (target_school_id, secondaire_id, '2nde C', 2),
+    (target_school_id, secondaire_id, '1ère A', 3),
+    (target_school_id, secondaire_id, '1ère C', 4),
+    (target_school_id, secondaire_id, '1ère D', 5),
+    (target_school_id, secondaire_id, 'Terminale A', 6),
+    (target_school_id, secondaire_id, 'Terminale C', 7),
+    (target_school_id, secondaire_id, 'Terminale D', 8);
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION handle_new_school_signup()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -559,6 +628,8 @@ BEGIN
 
     INSERT INTO grade_types (school_id, name, weight)
     VALUES (new_school_id, 'Devoir', 1);
+
+    PERFORM seed_default_education_levels(new_school_id);
   END IF;
   RETURN NEW;
 END;
@@ -629,6 +700,8 @@ ALTER TABLE service_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE education_cycles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE education_levels ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
 -- la RLS de `teachers` en interne, donc pas de récursion avec la policy
@@ -782,6 +855,14 @@ CREATE POLICY "School isolation: subjects"
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: class_subjects"
   ON class_subjects FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: education_cycles"
+  ON education_cycles FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: education_levels"
+  ON education_levels FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
 CREATE POLICY "School isolation: teachers"
@@ -1225,6 +1306,18 @@ CREATE POLICY "Parent read school reference: classes"
   USING (school_id = current_parent_school_id());
 CREATE POLICY "Student read school reference: classes"
   ON classes FOR SELECT TO authenticated
+  USING (school_id = current_student_school_id());
+CREATE POLICY "Parent read school reference: education_cycles"
+  ON education_cycles FOR SELECT TO authenticated
+  USING (school_id = current_parent_school_id());
+CREATE POLICY "Student read school reference: education_cycles"
+  ON education_cycles FOR SELECT TO authenticated
+  USING (school_id = current_student_school_id());
+CREATE POLICY "Parent read school reference: education_levels"
+  ON education_levels FOR SELECT TO authenticated
+  USING (school_id = current_parent_school_id());
+CREATE POLICY "Student read school reference: education_levels"
+  ON education_levels FOR SELECT TO authenticated
   USING (school_id = current_student_school_id());
 CREATE POLICY "Parent read school reference: subjects"
   ON subjects FOR SELECT TO authenticated

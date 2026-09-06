@@ -1,10 +1,12 @@
 'use client'
 
-import { useActionState, useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { saveGrades } from './actions'
 import { getDictionary } from '@/lib/i18n'
+import { enqueueWrite, formDataToFields } from '@/lib/offline-queue'
 
-const t = getDictionary().notesPage
+const dict = getDictionary()
+const t = dict.notesPage
 
 interface GradeType {
   id: string
@@ -31,7 +33,8 @@ export function GradesForm({
   gradeTypes: GradeType[]
   students: StudentRow[]
 }) {
-  const [state, formAction, pending] = useActionState(saveGrades, null)
+  const [pending, startTransition] = useTransition()
+  const [state, setState] = useState<{ error?: string; success?: boolean; count?: number; queued?: boolean } | null>(null)
   const [scores, setScores] = useState<Record<string, Record<string, string>>>(
     Object.fromEntries(
       students.map((s) => [
@@ -42,6 +45,37 @@ export function GradesForm({
       ])
     )
   )
+
+  // Valeurs vues à l'écran au chargement de la page — snapshot envoyé avec
+  // une saisie mise en attente hors-ligne pour permettre au serveur de
+  // détecter un conflit à la synchronisation (src/lib/offline-queue.ts).
+  const initialSnapshot = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const s of students) {
+      for (const gt of gradeTypes) {
+        const v = s.scores[gt.id]
+        map[`${s.id}:${gt.id}`] = v !== null && v !== undefined ? String(v) : ''
+      }
+    }
+    return map
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    startTransition(async () => {
+      try {
+        const result = await saveGrades(null, fd)
+        setState(result)
+      } catch {
+        // Échec réseau (hors-ligne, ou navigator.onLine a menti) : on met
+        // la saisie en attente plutôt que de la perdre.
+        enqueueWrite({ kind: 'grades', fields: formDataToFields(fd), snapshot: initialSnapshot })
+        setState({ queued: true })
+      }
+    })
+  }
 
   function setScore(studentId: string, gradeTypeId: string, value: string) {
     setScores((prev) => ({
@@ -72,7 +106,7 @@ export function GradesForm({
   }, [scores, students])
 
   return (
-    <form action={formAction} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       <input type="hidden" name="classId" value={classId} />
       <input type="hidden" name="subjectId" value={subjectId} />
       <input type="hidden" name="trimester" value={trimester} />
@@ -147,6 +181,7 @@ export function GradesForm({
         {state?.success && (
           <span className="text-sm text-emerald-600">{t.gradesSavedTemplate.replace('{count}', String(state.count))}</span>
         )}
+        {state?.queued && <span className="text-sm text-amber-600">{dict.offline.queuedNotice}</span>}
       </div>
     </form>
   )

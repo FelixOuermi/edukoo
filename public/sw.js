@@ -7,13 +7,19 @@
 // on sert la dernière copie connue de CETTE page précise si elle existe,
 // sinon la page d'erreur hors-ligne habituelle du navigateur.
 //
-// Volontairement PAS de mode "modifier hors-ligne + synchroniser au
-// retour" : pour des notes, absences ou paiements, une resynchronisation
-// mal gérée peut créer des conflits ou des doublons silencieux — plus
-// dangereux que pas de hors-ligne du tout. Le bandeau côté client
-// (src/components/offline-banner.tsx) prévient l'utilisateur que les
-// données affichées peuvent être périmées et qu'aucune action ne sera
-// enregistrée tant que la connexion n'est pas rétablie.
+// Pour les paiements et tout le reste : toujours PAS de mode "modifier
+// hors-ligne + synchroniser au retour" — un doublon d'encaissement est un
+// risque trop élevé pour une resynchronisation automatique. Le bandeau
+// côté client (src/components/offline-banner.tsx) prévient l'utilisateur
+// que les données affichées peuvent être périmées et qu'aucune action ne
+// sera enregistrée tant que la connexion n'est pas rétablie.
+//
+// Exception : la saisie de notes et d'absences peut désormais être mise en
+// attente hors-ligne puis synchronisée automatiquement au retour du réseau
+// (src/lib/offline-queue.ts + src/components/offline-sync.tsx), avec
+// détection de conflit (dernier arrivé gagne, tracé dans le journal
+// d'audit) — ce mécanisme est côté client (localStorage), indépendant de
+// ce service worker qui reste lecture seule.
 const CACHE_NAME = 'edukoo-offline-v1'
 
 self.addEventListener('install', () => {

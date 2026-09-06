@@ -10,7 +10,7 @@ export async function createClass(_prevState: unknown, formData: FormData) {
   const supabase = await createClient()
 
   const name = formData.get('name') as string
-  const level = formData.get('level') as string
+  const educationLevelId = (formData.get('educationLevelId') as string) || null
   const maxStudents = Number(formData.get('maxStudents') || 50)
 
   if (!name) return { error: getDictionary().errors.classNameRequired }
@@ -19,10 +19,100 @@ export async function createClass(_prevState: unknown, formData: FormData) {
     school_id: school.id,
     school_year_id: schoolYear?.id ?? null,
     name,
-    level: level || null,
+    education_level_id: educationLevelId,
     max_students: maxStudents,
   })
 
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/classes')
+  return { success: true }
+}
+
+export async function createEducationCycle(_prevState: unknown, formData: FormData) {
+  const { school } = await requireDirector()
+  const supabase = await createClient()
+
+  const name = formData.get('name') as string
+  const t = getDictionary().errors
+  if (!name) return { error: t.cycleNameRequired }
+
+  const { count } = await supabase.from('education_cycles').select('id', { count: 'exact', head: true }).eq('school_id', school.id)
+
+  const { error } = await supabase.from('education_cycles').insert({
+    school_id: school.id,
+    name,
+    display_order: count ?? 0,
+  })
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/classes')
+  return { success: true }
+}
+
+export async function createEducationLevel(_prevState: unknown, formData: FormData) {
+  const { school } = await requireDirector()
+  const supabase = await createClient()
+
+  const cycleId = formData.get('cycleId') as string
+  const name = formData.get('name') as string
+  const t = getDictionary().errors
+  if (!cycleId) return { error: t.cycleNotFound }
+  if (!name) return { error: t.levelNameRequired }
+
+  const { data: cycle } = await supabase.from('education_cycles').select('id').eq('id', cycleId).eq('school_id', school.id).maybeSingle()
+  if (!cycle) return { error: t.cycleNotFound }
+
+  const { count } = await supabase.from('education_levels').select('id', { count: 'exact', head: true }).eq('cycle_id', cycleId)
+
+  const { error } = await supabase.from('education_levels').insert({
+    school_id: school.id,
+    cycle_id: cycleId,
+    name,
+    display_order: count ?? 0,
+  })
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/classes')
+  return { success: true }
+}
+
+export async function deleteEducationLevel(id: string) {
+  const { school } = await requireDirector()
+  const supabase = await createClient()
+
+  const t = getDictionary().errors
+  const { count: usageCount } = await supabase
+    .from('classes')
+    .select('id', { count: 'exact', head: true })
+    .eq('education_level_id', id)
+  if ((usageCount ?? 0) > 0) {
+    return { error: t.cannotDeleteLevelInUseTemplate.replace('{count}', String(usageCount)) }
+  }
+
+  const { error } = await supabase.from('education_levels').delete().eq('id', id).eq('school_id', school.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/classes')
+  return { success: true }
+}
+
+export async function assignClassLevel(classId: string, educationLevelId: string | null) {
+  const { school } = await getCurrentSchool()
+  const supabase = await createClient()
+
+  const t = getDictionary().errors
+  const { data: klass } = await supabase.from('classes').select('id').eq('id', classId).eq('school_id', school.id).maybeSingle()
+  if (!klass) return { error: t.classNotFound }
+
+  if (educationLevelId) {
+    const { data: level } = await supabase.from('education_levels').select('id').eq('id', educationLevelId).eq('school_id', school.id).maybeSingle()
+    if (!level) return { error: t.educationLevelNotFound }
+  }
+
+  const { error } = await supabase.from('classes').update({ education_level_id: educationLevelId }).eq('id', classId).eq('school_id', school.id)
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/classes')

@@ -1,13 +1,29 @@
 'use client'
 
 import { useActionState, useState, useTransition } from 'react'
-import { createClass, createSubject, createGradeType, deleteGradeType, saveClassCoefficients } from './actions'
+import {
+  createClass,
+  createSubject,
+  createGradeType,
+  deleteGradeType,
+  saveClassCoefficients,
+  createEducationCycle,
+  createEducationLevel,
+  deleteEducationLevel,
+  assignClassLevel,
+} from './actions'
 import { getDictionary } from '@/lib/i18n'
 
 const dict = getDictionary()
 const t = dict.classesPage
 
-export function NewClassForm() {
+interface CycleOption {
+  id: string
+  name: string
+  levels: { id: string; name: string }[]
+}
+
+export function NewClassForm({ cycles }: { cycles: CycleOption[] }) {
   const [state, formAction, pending] = useActionState(createClass, null)
 
   return (
@@ -20,12 +36,22 @@ export function NewClassForm() {
         placeholder={t.namePlaceholder}
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
       />
-      <input
-        type="text"
-        name="level"
-        placeholder={t.levelPlaceholder}
+      <select
+        name="educationLevelId"
+        defaultValue=""
         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
-      />
+      >
+        <option value="">{t.levelSelectPlaceholder}</option>
+        {cycles.map((cycle) => (
+          <optgroup key={cycle.id} label={cycle.name}>
+            {cycle.levels.map((level) => (
+              <option key={level.id} value={level.id}>
+                {level.name}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
       <input
         type="number"
         name="maxStudents"
@@ -43,6 +69,142 @@ export function NewClassForm() {
         {pending ? t.adding : dict.common.add}
       </button>
     </form>
+  )
+}
+
+export function NewEducationCycleForm() {
+  const [state, formAction, pending] = useActionState(createEducationCycle, null)
+
+  return (
+    <form action={formAction} className="flex flex-wrap gap-2 items-start">
+      <input
+        type="text"
+        name="name"
+        required
+        placeholder={t.cycleNamePlaceholder}
+        className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-60"
+      >
+        {pending ? t.adding : t.addCycle}
+      </button>
+      {state?.error && <p className="text-xs text-red-600 w-full">{state.error}</p>}
+    </form>
+  )
+}
+
+export function NewEducationLevelForm({ cycles }: { cycles: { id: string; name: string }[] }) {
+  const [state, formAction, pending] = useActionState(createEducationLevel, null)
+
+  if (cycles.length === 0) return null
+
+  return (
+    <form action={formAction} className="flex flex-wrap gap-2 items-start">
+      <select
+        name="cycleId"
+        required
+        defaultValue=""
+        className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+      >
+        <option value="" disabled>
+          {t.selectCyclePlaceholder}
+        </option>
+        {cycles.map((cycle) => (
+          <option key={cycle.id} value={cycle.id}>
+            {cycle.name}
+          </option>
+        ))}
+      </select>
+      <input
+        type="text"
+        name="name"
+        required
+        placeholder={t.levelNamePlaceholder}
+        className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-60"
+      >
+        {pending ? t.adding : t.addLevel}
+      </button>
+      {state?.error && <p className="text-xs text-red-600 w-full">{state.error}</p>}
+    </form>
+  )
+}
+
+export function DeleteEducationLevelButton({ id }: { id: string }) {
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  return (
+    <span className="inline-flex items-center">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            setError(null)
+            const result = await deleteEducationLevel(id)
+            if (result?.error) setError(result.error)
+          })
+        }
+        className="text-xs text-gray-400 hover:text-rose-600 disabled:opacity-50"
+        aria-label={dict.common.delete}
+      >
+        ×
+      </button>
+      {error && <p className="text-[11px] text-rose-600 ml-1">{error}</p>}
+    </span>
+  )
+}
+
+export function AssignClassLevelSelect({
+  classId,
+  currentLevelId,
+  cycles,
+}: {
+  classId: string
+  currentLevelId: string | null
+  cycles: CycleOption[]
+}) {
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [value, setValue] = useState(currentLevelId ?? '')
+
+  return (
+    <div>
+      <select
+        value={value}
+        disabled={pending}
+        onChange={(e) => {
+          const next = e.target.value
+          setValue(next)
+          setError(null)
+          startTransition(async () => {
+            const result = await assignClassLevel(classId, next || null)
+            if (result?.error) setError(result.error)
+          })
+        }}
+        className="px-2 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed] disabled:opacity-60"
+      >
+        <option value="">{t.levelSelectNone}</option>
+        {cycles.map((cycle) => (
+          <optgroup key={cycle.id} label={cycle.name}>
+            {cycle.levels.map((level) => (
+              <option key={level.id} value={level.id}>
+                {level.name}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      {error && <p className="text-[11px] text-rose-600 mt-1">{error}</p>}
+    </div>
   )
 }
 

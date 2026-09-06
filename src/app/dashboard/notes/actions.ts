@@ -6,6 +6,7 @@ import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchool } from '@/lib/school'
 import { notifyGradesRecorded } from '@/lib/notifications'
+import { logAction } from '@/lib/audit-log'
 import { getDictionary } from '@/lib/i18n'
 
 async function assertTeacherAssigned(
@@ -27,7 +28,7 @@ async function assertTeacherAssigned(
 }
 
 export async function saveGrades(_prevState: unknown, formData: FormData) {
-  const { school, schoolYear, role, teacherId } = await getCurrentSchool()
+  const { school, schoolYear, role, teacherId, teacherName: actorName } = await getCurrentSchool()
   const supabase = await createClient()
   const dict = getDictionary()
   const t = dict.errors
@@ -98,6 +99,47 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
   }
 
   if (rows.length === 0) return { error: t.noGradesToSave }
+
+  // Rejeu d'une saisie mise en attente hors-ligne (src/lib/offline-queue.ts) :
+  // __offlineSnapshot contient les valeurs vues à l'écran au moment de la
+  // saisie. Si la valeur serveur actuelle diffère de ce snapshot, quelqu'un
+  // d'autre a modifié cette note entre-temps — on écrase quand même
+  // (dernier arrivé gagne) mais on trace le conflit dans le journal d'audit
+  // plutôt que de fusionner ou de bloquer silencieusement.
+  const offlineSnapshotRaw = formData.get('__offlineSnapshot') as string | null
+  if (offlineSnapshotRaw) {
+    try {
+      const snapshot = JSON.parse(offlineSnapshotRaw) as Record<string, string>
+      const studentIdsInRows = Array.from(new Set(rows.map((r) => r.student_id)))
+      const { data: currentGrades } = await supabase
+        .from('grades')
+        .select('student_id, grade_type_id, score')
+        .eq('subject_id', subjectId)
+        .eq('school_year_id', schoolYear.id)
+        .eq('trimester', trimester)
+        .in('student_id', studentIdsInRows)
+
+      const currentByKey = new Map((currentGrades ?? []).map((g) => [`${g.student_id}:${g.grade_type_id}`, g.score]))
+      for (const row of rows) {
+        const key = `${row.student_id}:${row.grade_type_id}`
+        if (!(key in snapshot)) continue
+        const current = currentByKey.get(key)
+        const currentStr = current === null || current === undefined ? '' : String(current)
+        if (currentStr !== snapshot[key]) {
+          await logAction(
+            supabase,
+            school.id,
+            actorName,
+            'Conflit de synchronisation hors-ligne',
+            `Note de ${studentNameById.get(row.student_id) ?? 'élève'} en ${subject.name} (${gradeTypeNameById.get(row.grade_type_id) ?? '—'}, trimestre ${trimester}) : valeur serveur "${currentStr || '—'}" remplacée par "${row.score}" saisie hors-ligne.`
+          )
+        }
+      }
+    } catch {
+      // Snapshot corrompu/illisible : on ignore la détection de conflit
+      // plutôt que de bloquer l'enregistrement.
+    }
+  }
 
   const { error } = await supabase
     .from('grades')
