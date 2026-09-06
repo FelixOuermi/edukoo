@@ -21,6 +21,7 @@ import {
   Bus,
   DoorOpen,
   HelpCircle,
+  Banknote,
 } from 'lucide-react'
 import { signOut } from '@/app/auth/actions'
 import type { TeacherRole } from '@/lib/school'
@@ -42,6 +43,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/salles', label: t.nav.rooms, icon: DoorOpen, directorOnly: false },
   { href: '/dashboard/annonces', label: t.nav.announcements, icon: Megaphone, directorOnly: false },
   { href: '/dashboard/enseignants', label: t.nav.teachers, icon: Users, directorOnly: false },
+  { href: '/dashboard/personnel-paie', label: t.nav.payroll, icon: Banknote, directorOnly: true },
   { href: '/dashboard/journal', label: t.nav.auditLog, icon: ScrollText, directorOnly: true },
   { href: '/dashboard/parametres', label: t.nav.settings, icon: Settings, directorOnly: true },
 ]

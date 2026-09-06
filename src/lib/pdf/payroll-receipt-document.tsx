@@ -1,0 +1,129 @@
+import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
+import { getDictionary } from '@/lib/i18n'
+
+const styles = StyleSheet.create({
+  page: { padding: 40, fontSize: 11, fontFamily: 'Helvetica', color: '#1f2937' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    borderBottom: '2 solid #7c3aed',
+    paddingBottom: 16,
+    marginBottom: 20,
+  },
+  headerLeft: { flexShrink: 1, flexGrow: 0, paddingRight: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logo: { width: 32, height: 32, objectFit: 'contain' },
+  headerRight: { flexShrink: 1, flexGrow: 0, alignItems: 'flex-end' },
+  schoolName: { fontSize: 15, fontWeight: 700, color: '#4c1d95' },
+  schoolMeta: { fontSize: 9, color: '#6b7280', marginTop: 2 },
+  receiptTitle: { fontSize: 15, fontWeight: 700, color: '#7c3aed', textAlign: 'right' },
+  receiptNumber: { fontSize: 10, color: '#6b7280', textAlign: 'right', marginTop: 2 },
+  section: { marginBottom: 16 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  label: { color: '#6b7280' },
+  value: { fontWeight: 700 },
+  amountBox: {
+    backgroundColor: '#f5f3ff',
+    borderRadius: 6,
+    padding: 16,
+    marginTop: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  amountLabel: { fontSize: 10, color: '#6b7280' },
+  amountValue: { fontSize: 22, fontWeight: 700, color: '#4c1d95', marginTop: 4 },
+  footer: { marginTop: 40, borderTop: '1 solid #e5e7eb', paddingTop: 12, fontSize: 9, color: '#9ca3af', textAlign: 'center' },
+})
+
+export interface PayrollReceiptData {
+  schoolName: string
+  schoolAddress?: string | null
+  schoolPhone?: string | null
+  schoolLogoUrl?: string | null
+  receiptNumber: string
+  staffMemberName: string
+  roleTitle?: string | null
+  periodMonth: string
+  amount: number
+  paymentMethod: string
+  paidAt: string
+  note?: string | null
+}
+
+function formatFCFA(amount: number) {
+  return Math.round(amount)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
+export function PayrollReceiptDocument({ data }: { data: PayrollReceiptData }) {
+  const formattedAmount = formatFCFA(data.amount)
+  const dict = getDictionary()
+  const t = dict.documents.payrollReceipt
+  const paymentMethodLabel: Record<string, string> = dict.paymentMethods
+
+  return (
+    <Document>
+      <Page size="A5" style={styles.page}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {data.schoolLogoUrl && <Image src={data.schoolLogoUrl} style={styles.logo} />}
+            <View>
+              <Text style={styles.schoolName}>{data.schoolName}</Text>
+              {data.schoolAddress && <Text style={styles.schoolMeta}>{data.schoolAddress}</Text>}
+              {data.schoolPhone && <Text style={styles.schoolMeta}>{data.schoolPhone}</Text>}
+            </View>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.receiptTitle}>{t.title}</Text>
+            <Text style={styles.receiptNumber}>{data.receiptNumber}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.label}>{t.staffMember}</Text>
+            <Text style={styles.value}>{data.staffMemberName}</Text>
+          </View>
+          {data.roleTitle && (
+            <View style={styles.row}>
+              <Text style={styles.label}>{t.roleTitle}</Text>
+              <Text style={styles.value}>{data.roleTitle}</Text>
+            </View>
+          )}
+          <View style={styles.row}>
+            <Text style={styles.label}>{t.period}</Text>
+            <Text style={styles.value}>
+              {new Date(data.periodMonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>{t.paymentMethod}</Text>
+            <Text style={styles.value}>{paymentMethodLabel[data.paymentMethod] ?? data.paymentMethod}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>{t.date}</Text>
+            <Text style={styles.value}>
+              {new Date(data.paidAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            </Text>
+          </View>
+          {data.note && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Note</Text>
+              <Text style={styles.value}>{data.note}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.amountBox}>
+          <Text style={styles.amountLabel}>{t.amountPaid}</Text>
+          <Text style={styles.amountValue}>{formattedAmount} FCFA</Text>
+        </View>
+
+        <View style={styles.footer}>
+          <Text>{t.footer}</Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}

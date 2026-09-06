@@ -459,6 +459,41 @@ CREATE TABLE service_payments (
   created_by UUID REFERENCES auth.users(id)
 );
 
+-- Personnel & Paie : suit l'argent VERSÉ par l'école (salaires), flux
+-- inverse de la scolarité/services (argent REÇU). `teachers` ne couvre
+-- pas le personnel non-enseignant, d'où cette table de référence à part ;
+-- `teacher_id` lie optionnellement un membre du personnel à son compte
+-- enseignant existant (évite de ressaisir nom/téléphone) sans l'imposer.
+CREATE TABLE staff_members (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  teacher_id UUID REFERENCES teachers(id)
+    ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  role_title TEXT,
+  phone TEXT,
+  monthly_salary DECIMAL(12,2) CHECK (monthly_salary IS NULL OR monthly_salary > 0),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE payroll_payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  staff_member_id UUID REFERENCES staff_members(id)
+    ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
+  period_month DATE NOT NULL,
+  payment_method TEXT DEFAULT 'cash'
+    CHECK (payment_method IN ('cash', 'orange_money', 'moov_money', 'transfer')),
+  note TEXT,
+  receipt_number TEXT,
+  paid_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id)
+);
+
 -- Gestion des salles comme ressource réservable : distinct de
 -- timetable_slots.room (texte libre, cours récurrents) — ceci couvre les
 -- réservations ponctuelles. Purement interne au personnel, pas de policy
@@ -686,6 +721,13 @@ CREATE TRIGGER set_service_receipt_number
         OR NEW.receipt_number = '')
   EXECUTE FUNCTION generate_receipt_number();
 
+CREATE TRIGGER set_payroll_receipt_number
+  BEFORE INSERT ON payroll_payments
+  FOR EACH ROW
+  WHEN (NEW.receipt_number IS NULL
+        OR NEW.receipt_number = '')
+  EXECUTE FUNCTION generate_receipt_number();
+
 -- RLS
 ALTER TABLE schools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE school_years ENABLE ROW LEVEL SECURITY;
@@ -717,6 +759,8 @@ ALTER TABLE room_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE education_cycles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE education_levels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_usage ENABLE ROW LEVEL SECURITY;
+ALTER TABLE staff_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payroll_payments ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
 -- la RLS de `teachers` en interne, donc pas de récursion avec la policy
@@ -1269,6 +1313,18 @@ CREATE POLICY "Student read own: service_payments"
         AND ss.student_id = current_student_id()
     )
   );
+
+-- Personnel & Paie : directeur uniquement, y compris au niveau RLS (pas
+-- seulement applicatif) — une fuite de salaire vers un collègue
+-- enseignant serait un vrai problème, pas juste une gêne d'UI.
+CREATE POLICY "Director only: staff_members"
+  ON staff_members FOR ALL TO authenticated
+  USING (school_id = current_school_id() AND current_teacher_role() = 'director')
+  WITH CHECK (school_id = current_school_id() AND current_teacher_role() = 'director');
+CREATE POLICY "Director only: payroll_payments"
+  ON payroll_payments FOR ALL TO authenticated
+  USING (school_id = current_school_id() AND current_teacher_role() = 'director')
+  WITH CHECK (school_id = current_school_id() AND current_teacher_role() = 'director');
 
 -- Salles : purement interne au personnel.
 CREATE POLICY "School isolation: rooms"

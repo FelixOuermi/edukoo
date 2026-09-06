@@ -127,6 +127,14 @@ Chaque case = une tâche de taille session (quelques heures max). On coche au fu
 - [x] Guide d'utilisation — `src/app/guide`, 18 sections couvrant toutes les fonctionnalités avec sommaire ancré, lié depuis le footer et la barre latérale du dashboard (nouvel onglet).
 - [x] SMS de secours sur les absences — `src/lib/sms.ts` (Twilio par défaut, best-effort comme `email.ts`, silencieux tant que `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM_NUMBER` ne sont pas configurés). Câblé en complément de l'email sur `notifyAbsenceRecorded` et `notifyAbsenceThreshold` (les notifications les plus urgentes) — pas sur notes/paiements pour limiter le coût par SMS. Nécessite un compte Twilio actif pour fonctionner réellement ; non testé en envoi réel (pas d'accès à un compte).
 
+### P3 — Personnel & Paie ✅ terminé
+Décision du 2026-09-06 : module séparé de "Enseignants" (pas une extension), suite à discussion — la paie est un flux d'argent inverse de la scolarité (l'école verse, ne reçoit pas), et `teachers` ne couvre pas le personnel non-enseignant (comptable, gardien...).
+- [x] Tables `staff_members` (référentiel personnel, lien optionnel vers `teachers` pour éviter de ressaisir nom/téléphone d'un enseignant déjà connu) et `payroll_payments` (historique des versements, reçu PDF) — `supabase/migrations/0024_payroll.sql`, RLS **restreinte au directeur y compris au niveau base** (`current_teacher_role() = 'director'` dans la policy, pas seulement `requireDirector()` côté appli) — seule table de l'appli avec cette restriction stricte, les montants de salaire étant plus sensibles qu'une donnée pédagogique partagée
+- [x] Page `dashboard/personnel-paie` : liste du personnel actif, salaire mensuel, total versé, ajout (avec sélection d'un enseignant existant en option), désactivation
+- [x] Paiement + reçu PDF (`personnel-paie/paiement`, `personnel-paie/recu/[id]`, `src/lib/pdf/payroll-receipt-document.tsx`) — même gabarit que les reçus scolarité/services
+- [x] Nouvelle entrée de navigation "Personnel & Paie" (director only)
+- Testé en navigateur de bout en bout sur données réelles : migration exécutée en production, ajout d'un membre du personnel de test, enregistrement d'un paiement (reçu `REC-2026-1029` généré), PDF vérifié (chargement sans erreur), puis paiement/membre/entrées de journal d'audit de test supprimés directement en base.
+
 ### ⚪ Hors périmètre (décidé)
 Décision prise le 2026-09-03 : Edukoo reste 100% secondaire (collège/lycée). Le volet universitaire (ECTS, UE, jurys, inscription à la carte) est **écarté de la feuille de route** — pas de tâches à prévoir dessus. Le tableau comparatif universitaire plus haut est conservé uniquement comme référence historique de l'analyse.
 
