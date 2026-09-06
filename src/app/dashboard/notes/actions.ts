@@ -9,6 +9,12 @@ import { notifyGradesRecorded } from '@/lib/notifications'
 import { logAction } from '@/lib/audit-log'
 import { getDictionary } from '@/lib/i18n'
 
+// Barème fixe (0-20) : max_score existe en base pour une éventuelle
+// flexibilité future, mais rien dans l'appli ne permet aujourd'hui de le
+// changer — donc validé contre cette constante partout où une note est
+// saisie ou importée.
+const MAX_SCORE = 20
+
 async function assertTeacherAssigned(
   supabase: Awaited<ReturnType<typeof createClient>>,
   role: string,
@@ -76,6 +82,8 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
     max_score: number
   }[] = []
 
+  const invalidEntries: string[] = []
+
   for (const studentId of studentIds) {
     if (!validStudentIds.has(studentId)) continue
     for (const gradeTypeId of gradeTypeIds) {
@@ -84,6 +92,10 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
       if (raw === null || raw === '') continue
       const score = Number(raw)
       if (Number.isNaN(score)) continue
+      if (score < 0 || score > MAX_SCORE) {
+        invalidEntries.push(`${studentNameById.get(studentId) ?? '—'} (${gradeTypeNameById.get(gradeTypeId) ?? '—'}) : ${raw}`)
+        continue
+      }
       rows.push({
         school_id: school.id,
         student_id: studentId,
@@ -93,8 +105,17 @@ export async function saveGrades(_prevState: unknown, formData: FormData) {
         grade_type_id: gradeTypeId,
         trimester,
         score,
-        max_score: 20,
+        max_score: MAX_SCORE,
       })
+    }
+  }
+
+  // Tout ou rien : si au moins une note est hors barème, on ne sauvegarde
+  // rien plutôt que d'enregistrer partiellement — le formulaire garde la
+  // saisie de l'enseignant, qui corrige et resoumet.
+  if (invalidEntries.length > 0) {
+    return {
+      error: t.invalidScoreRangeTemplate.replace('{max}', String(MAX_SCORE)).replace('{list}', invalidEntries.slice(0, 5).join(', ')),
     }
   }
 
@@ -245,7 +266,7 @@ export async function importGradesFromExcel(formData: FormData) {
       const gradeTypeId = gradeTypeByName.get(column.trim().toLowerCase())
       if (!gradeTypeId || value === undefined || value === '') continue
       const score = Number(value)
-      if (Number.isNaN(score)) {
+      if (Number.isNaN(score) || score < 0 || score > MAX_SCORE) {
         invalidScores++
         continue
       }
@@ -258,7 +279,7 @@ export async function importGradesFromExcel(formData: FormData) {
         grade_type_id: gradeTypeId,
         trimester,
         score,
-        max_score: 20,
+        max_score: MAX_SCORE,
       })
     }
   }

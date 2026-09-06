@@ -52,7 +52,7 @@ export async function saveAbsences(_prevState: unknown, formData: FormData) {
         .from('absences')
         .select('student_id, is_justified')
         .eq('school_id', school.id)
-        .eq('class_id', classId)
+        .in('student_id', Array.from(validStudentIds))
         .eq('absence_date', date)
       const currentByStudent = new Map((currentAbsences ?? []).map((a) => [a.student_id, a.is_justified]))
 
@@ -78,12 +78,19 @@ export async function saveAbsences(_prevState: unknown, formData: FormData) {
     }
   }
 
-  await supabase
-    .from('absences')
-    .delete()
-    .eq('school_id', school.id)
-    .eq('class_id', classId)
-    .eq('absence_date', date)
+  // Filtré par la liste d'élèves de la classe actuelle (student_id) plutôt
+  // que par absences.class_id : cette colonne n'est jamais mise à jour si
+  // un élève change de classe (dashboard/eleves/actions.ts updateStudent),
+  // donc s'y fier laisserait une ancienne ligne orpheline au lieu de la
+  // remplacer — même correction que src/lib/bulletin.ts.
+  if (validStudentIds.size > 0) {
+    await supabase
+      .from('absences')
+      .delete()
+      .eq('school_id', school.id)
+      .in('student_id', Array.from(validStudentIds))
+      .eq('absence_date', date)
+  }
 
   const absentStudentIds = studentIds.filter((id) => validStudentIds.has(id) && formData.get(`absent_${id}`) === 'on')
 

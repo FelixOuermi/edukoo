@@ -76,47 +76,55 @@ export async function computeClassBulletins({
   const absencesRange = period ?? schoolYear
   const absencesScope: 'period' | 'year' = period ? 'period' : 'year'
 
-  const [
-    { data: students },
-    { data: subjects },
-    { data: classCoefficients },
-    { data: gradeTypes },
-    { data: grades },
-    { data: appreciations },
-    { data: absences },
-  ] = await Promise.all([
-    supabase
-      .from('students')
-      .select('id, first_name, last_name')
-      .eq('class_id', classId)
-      .eq('school_id', schoolId)
-      .eq('status', 'active')
-      .order('last_name'),
-    supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
-    supabase.from('class_subjects').select('subject_id, coefficient').eq('school_id', schoolId).eq('class_id', classId),
-    supabase.from('grade_types').select('id, weight').eq('school_id', schoolId),
-    supabase
-      .from('grades')
-      .select('student_id, subject_id, grade_type_id, score')
-      .eq('class_id', classId)
-      .eq('school_year_id', schoolYearId)
-      .eq('trimester', trimester),
-    supabase
-      .from('bulletin_appreciations')
-      .select('student_id, appreciation')
-      .eq('school_id', schoolId)
-      .eq('school_year_id', schoolYearId)
-      .eq('trimester', trimester),
-    absencesRange
-      ? supabase
-          .from('absences')
-          .select('student_id, is_justified')
-          .eq('class_id', classId)
-          .eq('school_id', schoolId)
-          .gte('absence_date', absencesRange.start_date)
-          .lte('absence_date', absencesRange.end_date)
-      : Promise.resolve({ data: [] as { student_id: string; is_justified: boolean }[] }),
-  ])
+  // La liste d'élèves fait autorité sur "qui est dans cette classe" —
+  // récupérée d'abord, puis utilisée pour filtrer notes/absences par
+  // student_id plutôt que par leur propre colonne class_id. Cette colonne
+  // est recopiée au moment de la saisie mais jamais mise à jour si
+  // l'élève change de classe ensuite (dashboard/eleves/actions.ts
+  // updateStudent modifie students.class_id, pas les lignes grades/
+  // absences déjà existantes) : filtrer par elle ferait disparaître du
+  // bulletin les notes/absences d'un élève transféré en cours d'année,
+  // alors que la page Notes (qui ne filtre que par student_id) les
+  // afficherait normalement — bulletin et notes désynchronisés.
+  const { data: students } = await supabase
+    .from('students')
+    .select('id, first_name, last_name')
+    .eq('class_id', classId)
+    .eq('school_id', schoolId)
+    .eq('status', 'active')
+    .order('last_name')
+
+  const studentIds = (students ?? []).map((s) => s.id)
+
+  const [{ data: subjects }, { data: classCoefficients }, { data: gradeTypes }, { data: grades }, { data: appreciations }, { data: absences }] =
+    await Promise.all([
+      supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId).order('name'),
+      supabase.from('class_subjects').select('subject_id, coefficient').eq('school_id', schoolId).eq('class_id', classId),
+      supabase.from('grade_types').select('id, weight').eq('school_id', schoolId),
+      studentIds.length > 0
+        ? supabase
+            .from('grades')
+            .select('student_id, subject_id, grade_type_id, score')
+            .in('student_id', studentIds)
+            .eq('school_year_id', schoolYearId)
+            .eq('trimester', trimester)
+        : Promise.resolve({ data: [] as { student_id: string; subject_id: string; grade_type_id: string; score: number }[] }),
+      supabase
+        .from('bulletin_appreciations')
+        .select('student_id, appreciation')
+        .eq('school_id', schoolId)
+        .eq('school_year_id', schoolYearId)
+        .eq('trimester', trimester),
+      absencesRange && studentIds.length > 0
+        ? supabase
+            .from('absences')
+            .select('student_id, is_justified')
+            .in('student_id', studentIds)
+            .eq('school_id', schoolId)
+            .gte('absence_date', absencesRange.start_date)
+            .lte('absence_date', absencesRange.end_date)
+        : Promise.resolve({ data: [] as { student_id: string; is_justified: boolean }[] }),
+    ])
 
   const className = klass.name
   const weightByGradeType = new Map((gradeTypes ?? []).map((gt) => [gt.id, Number(gt.weight)]))

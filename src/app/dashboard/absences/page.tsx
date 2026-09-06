@@ -39,20 +39,26 @@ export default async function AbsencesPage({
   }[] = []
 
   if (classId) {
-    const [{ data: classStudents }, { data: dayAbsences }, { data: allAbsences }] = await Promise.all([
-      supabase
-        .from('students')
-        .select('id, first_name, last_name, parent_name, parent_whatsapp')
-        .eq('class_id', classId)
-        .eq('status', 'active')
-        .order('last_name'),
-      supabase
-        .from('absences')
-        .select('student_id, is_justified')
-        .eq('class_id', classId)
-        .eq('absence_date', selectedDate),
-      supabase.from('absences').select('student_id').eq('class_id', classId).eq('school_id', school.id),
-    ])
+    const { data: classStudents } = await supabase
+      .from('students')
+      .select('id, first_name, last_name, parent_name, parent_whatsapp')
+      .eq('class_id', classId)
+      .eq('status', 'active')
+      .order('last_name')
+
+    // Filtré par student_id plutôt que par la colonne absences.class_id :
+    // cette colonne est recopiée à la saisie mais jamais mise à jour si
+    // l'élève change de classe ensuite (dashboard/eleves/actions.ts
+    // updateStudent) — même désynchronisation que dans src/lib/bulletin.ts.
+    const studentIds = (classStudents ?? []).map((s) => s.id)
+
+    const [{ data: dayAbsences }, { data: allAbsences }] =
+      studentIds.length > 0
+        ? await Promise.all([
+            supabase.from('absences').select('student_id, is_justified').in('student_id', studentIds).eq('absence_date', selectedDate),
+            supabase.from('absences').select('student_id').in('student_id', studentIds).eq('school_id', school.id),
+          ])
+        : [{ data: [] as { student_id: string; is_justified: boolean }[] }, { data: [] as { student_id: string }[] }]
 
     const dayMap = new Map((dayAbsences ?? []).map((a) => [a.student_id, a.is_justified]))
     const countMap = new Map<string, number>()

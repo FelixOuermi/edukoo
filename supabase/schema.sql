@@ -270,10 +270,15 @@ CREATE TABLE grades (
     ON DELETE RESTRICT,
   trimester INTEGER CHECK (trimester BETWEEN 1 AND 6),
   score DECIMAL(5,2),
-  max_score DECIMAL(5,2) DEFAULT 20,
+  max_score DECIMAL(5,2) DEFAULT 20 CHECK (max_score > 0),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(student_id, subject_id,
-         school_year_id, trimester, grade_type_id)
+         school_year_id, trimester, grade_type_id),
+  -- Dernier rempart si un appel contourne la validation applicative
+  -- (formulaire modifié via les outils navigateur, rejeu de la file
+  -- hors-ligne, appel direct à l'API) : score toujours entre 0 et
+  -- max_score.
+  CHECK (score IS NULL OR (score >= 0 AND score <= max_score))
 );
 
 -- Affectation d'un enseignant à ses classes/matières : restreint, pour un

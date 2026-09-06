@@ -59,6 +59,8 @@ const fr = {
     notAssignedToClassSubject: "Vous n'êtes pas affecté à cette classe/matière.",
     classOrSubjectNotFound: 'Classe ou matière introuvable.',
     noGradesToSave: 'Aucune note à enregistrer.',
+    invalidScoreRangeTemplate:
+      "Note(s) hors barème (doit être entre 0 et {max}), rien n'a été enregistré : {list}. Corrigez puis réessayez.",
     noFileProvided: 'Aucun fichier fourni.',
     noGradeTypesConfiguredShort: 'Aucun type de note configuré.',
     noValidGradesFoundTemplate:
