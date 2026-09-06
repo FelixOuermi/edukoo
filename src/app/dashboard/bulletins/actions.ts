@@ -9,19 +9,32 @@ export async function saveAppreciation(
   trimester: number,
   appreciation: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
 
   if (!schoolYear) return { error: 'Aucune année scolaire active.' }
 
   const { data: student } = await supabase
     .from('students')
-    .select('id')
+    .select('id, class_id')
     .eq('id', studentId)
     .eq('school_id', school.id)
     .maybeSingle()
 
   if (!student) return { error: 'Élève introuvable.' }
+
+  // Même restriction que la page Bulletins : un enseignant ne peut écrire
+  // l'appréciation générale que d'un élève d'une classe où il a au moins
+  // une matière affectée (le directeur n'est jamais restreint).
+  if (role !== 'director') {
+    const { data: assignment } = await supabase
+      .from('teacher_subjects')
+      .select('id')
+      .eq('teacher_id', teacherId)
+      .eq('class_id', student.class_id)
+      .maybeSingle()
+    if (!assignment) return { error: "Vous n'êtes pas affecté à cette classe." }
+  }
 
   // Pas d'upsert avec onConflict : l'unicité de l'appréciation générale est
   // un index partiel (WHERE subject_id IS NULL, coexiste avec l'index

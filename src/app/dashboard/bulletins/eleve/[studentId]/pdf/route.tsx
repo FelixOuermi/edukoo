@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ studentId: string }> }
 ) {
   const { studentId } = await params
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
 
   if (!schoolYear) {
@@ -29,6 +29,21 @@ export async function GET(
 
   if (!student?.class_id) {
     return NextResponse.json({ error: 'Élève ou classe introuvable.' }, { status: 404 })
+  }
+
+  // Même restriction que le bulletin de classe : un lien vers cette route
+  // peut être forgé directement, indépendamment du filtrage du menu sur
+  // dashboard/bulletins.
+  if (role !== 'director') {
+    const { data: assignment } = await supabase
+      .from('teacher_subjects')
+      .select('id')
+      .eq('teacher_id', teacherId)
+      .eq('class_id', student.class_id)
+      .maybeSingle()
+    if (!assignment) {
+      return NextResponse.json({ error: "Vous n'êtes pas affecté à cette classe." }, { status: 403 })
+    }
   }
 
   const { bulletins } = await computeClassBulletins({

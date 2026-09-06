@@ -10,17 +10,31 @@ export default async function BulletinsPage({
   searchParams: Promise<{ classe?: string; trimestre?: string }>
 }) {
   const { classe, trimestre } = await searchParams
-  const { school, schoolYear } = await getCurrentSchool()
+  const { school, schoolYear, role, teacherId } = await getCurrentSchool()
   const supabase = await createClient()
+  const isDirector = role === 'director'
 
-  const [{ data: classes }, { data: periods }] = await Promise.all([
+  const [{ data: allClasses }, { data: periods }, { data: assignments }] = await Promise.all([
     supabase.from('classes').select('id, name').eq('school_id', school.id).order('name'),
     schoolYear
       ? supabase.from('periods').select('number, name').eq('school_id', school.id).eq('school_year_id', schoolYear.id).order('number')
       : Promise.resolve({ data: [] as { number: number; name: string }[] }),
+    isDirector
+      ? Promise.resolve({ data: [] as { class_id: string }[] })
+      : supabase.from('teacher_subjects').select('class_id').eq('teacher_id', teacherId),
   ])
 
-  const classId = classe || classes?.[0]?.id
+  // Un enseignant ne voit ici que les classes où il a au moins une matière
+  // affectée (comme la page Notes) — avant ce correctif, n'importe quel
+  // enseignant pouvait consulter le bulletin complet (toutes matières,
+  // classement) de n'importe quelle classe de l'école, alors que la saisie
+  // de notes lui reste strictement limitée à ses propres affectations.
+  const assignedClassIds = new Set((assignments ?? []).map((a) => a.class_id))
+  const classes = isDirector ? (allClasses ?? []) : (allClasses ?? []).filter((c) => assignedClassIds.has(c.id))
+  const hasNoAssignment = !isDirector && assignedClassIds.size === 0
+
+  const requestedClassId = classe && classes.some((c) => c.id === classe) ? classe : undefined
+  const classId = requestedClassId || classes[0]?.id
   const trimester = Number(trimestre || 1)
   const periodOptions =
     (periods ?? []).length > 0
@@ -41,6 +55,12 @@ export default async function BulletinsPage({
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Bulletins</h1>
 
+      {hasNoAssignment ? (
+        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          Aucune classe ne vous a été assignée. Demandez à votre directeur de vous affecter depuis la page Enseignants.
+        </p>
+      ) : (
+        <>
       <form method="get" className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap gap-3 items-center">
         <select
           name="classe"
@@ -139,6 +159,8 @@ export default async function BulletinsPage({
             </tbody>
           </table>
         </div>
+      )}
+        </>
       )}
     </div>
   )
