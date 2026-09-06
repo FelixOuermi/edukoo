@@ -743,6 +743,7 @@ const fr = {
       subject: 'Matière',
       coefficient: 'Coefficient',
       scoreOn20: 'Note /20',
+      classAverage: 'Moy. classe',
       weightedAverage: 'Moy. pondérée',
       generalAverage: 'Moyenne générale',
       rank: 'Rang',

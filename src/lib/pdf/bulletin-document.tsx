@@ -46,10 +46,11 @@ const styles = StyleSheet.create({
   },
   tableRowWrap: { borderBottom: '1 solid #e5e7eb' },
   subjectAppreciation: { fontSize: 8, color: '#6b7280', fontStyle: 'italic', paddingHorizontal: 8, paddingBottom: 5 },
-  colSubject: { width: '40%' },
-  colCoef: { width: '20%', textAlign: 'center' },
-  colScore: { width: '20%', textAlign: 'center' },
-  colWeighted: { width: '20%', textAlign: 'center' },
+  colSubject: { width: '32%' },
+  colCoef: { width: '14%', textAlign: 'center' },
+  colScore: { width: '18%', textAlign: 'center' },
+  colClassAvg: { width: '18%', textAlign: 'center' },
+  colWeighted: { width: '18%', textAlign: 'center' },
   totalsBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -114,6 +115,7 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
             <Text style={[styles.tableHeaderText, styles.colSubject]}>{t.subject}</Text>
             <Text style={[styles.tableHeaderText, styles.colCoef]}>{t.coefficient}</Text>
             <Text style={[styles.tableHeaderText, styles.colScore]}>{t.scoreOn20}</Text>
+            <Text style={[styles.tableHeaderText, styles.colClassAvg]}>{t.classAverage}</Text>
             <Text style={[styles.tableHeaderText, styles.colWeighted]}>{t.weightedAverage}</Text>
           </View>
           {bulletin.subjects.map((sg) => (
@@ -122,6 +124,7 @@ function BulletinPage({ data }: { data: BulletinPdfData }) {
                 <Text style={styles.colSubject}>{sg.subjectName}</Text>
                 <Text style={styles.colCoef}>{sg.coefficient}</Text>
                 <Text style={styles.colScore}>{sg.score !== null ? sg.score.toFixed(2) : '—'}</Text>
+                <Text style={styles.colClassAvg}>{sg.classAverage !== null ? sg.classAverage.toFixed(2) : '—'}</Text>
                 <Text style={styles.colWeighted}>{sg.weighted !== null ? sg.weighted.toFixed(2) : '—'}</Text>
               </View>
               {sg.appreciation && <Text style={styles.subjectAppreciation}>{sg.appreciation}</Text>}

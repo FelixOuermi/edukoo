@@ -5,6 +5,11 @@ export interface SubjectGrade {
   coefficient: number
   score: number | null
   weighted: number | null
+  // Moyenne de la matière sur toute la classe (moyenne simple des notes des
+  // élèves ayant une note dans cette matière, même méthode que
+  // src/lib/statistics.ts) — permet à l'élève de situer sa note par rapport
+  // au reste de la classe directement sur son bulletin.
+  classAverage: number | null
   appreciation: string | null
 }
 
@@ -176,6 +181,14 @@ export async function computeClassBulletins({
     return totalWeight > 0 ? totalWeighted / totalWeight : null
   }
 
+  const classAverageBySubject = new Map<string, number | null>()
+  for (const subj of subjects ?? []) {
+    const scores = (students ?? [])
+      .map((s) => subjectAverage(s.id, subj.id))
+      .filter((v): v is number => v !== null)
+    classAverageBySubject.set(subj.id, scores.length > 0 ? scores.reduce((sum, v) => sum + v, 0) / scores.length : null)
+  }
+
   const bulletins: StudentBulletin[] = (students ?? []).map((s) => {
     const subjectGrades: SubjectGrade[] = (subjects ?? []).map((subj) => {
       const score = subjectAverage(s.id, subj.id)
@@ -185,6 +198,7 @@ export async function computeClassBulletins({
         coefficient,
         score,
         weighted: score !== null ? score * coefficient : null,
+        classAverage: classAverageBySubject.get(subj.id) ?? null,
         appreciation: appreciationByStudentAndSubject.get(`${s.id}:${subj.id}`) ?? null,
       }
     })
