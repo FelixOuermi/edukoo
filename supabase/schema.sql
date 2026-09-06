@@ -79,6 +79,20 @@ CREATE TABLE education_levels (
   UNIQUE (cycle_id, name)
 );
 
+-- Compteur d'usage quotidien des fonctions IA (src/lib/ai.ts), par école.
+-- Le seuil du jour dépend du plan payant de l'école (voir
+-- consume_ai_quota() plus bas) — évite qu'un usage répété (clics en
+-- boucle) ne consomme l'API sans limite.
+CREATE TABLE ai_usage (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  school_id UUID REFERENCES schools(id)
+    ON DELETE CASCADE,
+  usage_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (school_id, usage_date)
+);
+
 -- Classes
 CREATE TABLE classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -702,6 +716,7 @@ ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE education_cycles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE education_levels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_usage ENABLE ROW LEVEL SECURITY;
 
 -- Résout l'école de l'utilisateur connecté. SECURITY DEFINER : contourne
 -- la RLS de `teachers` en interne, donc pas de récursion avec la policy
@@ -865,6 +880,28 @@ CREATE POLICY "School isolation: education_levels"
   ON education_levels FOR ALL TO authenticated
   USING (school_id = current_school_id())
   WITH CHECK (school_id = current_school_id());
+CREATE POLICY "School isolation: ai_usage"
+  ON ai_usage FOR ALL TO authenticated
+  USING (school_id = current_school_id())
+  WITH CHECK (school_id = current_school_id());
+
+-- Incrémentation atomique avec vérification de seuil en une seule
+-- opération (voir migration 0023 pour le détail du raisonnement).
+CREATE OR REPLACE FUNCTION consume_ai_quota(target_school_id UUID, daily_limit INTEGER)
+RETURNS BOOLEAN AS $$
+DECLARE
+  result_count INTEGER;
+BEGIN
+  INSERT INTO ai_usage (school_id, usage_date, count)
+  VALUES (target_school_id, CURRENT_DATE, 1)
+  ON CONFLICT (school_id, usage_date)
+  DO UPDATE SET count = ai_usage.count + 1
+  WHERE ai_usage.count < daily_limit
+  RETURNING count INTO result_count;
+
+  RETURN result_count IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 CREATE POLICY "School isolation: teachers"
   ON teachers FOR ALL TO authenticated
   USING (school_id = current_school_id())

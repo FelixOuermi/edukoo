@@ -522,6 +522,7 @@ const fr = {
     rateLimited: 'Service IA temporairement saturé, réessayez dans un instant.',
     apiErrorTemplate: 'Service IA indisponible ({status}). Réessayez plus tard.',
     unavailable: 'Service IA indisponible. Réessayez plus tard.',
+    quotaExceededTemplate: "Limite quotidienne de {limit} génération(s) IA atteinte pour votre offre. Réessayez demain.",
   },
   teachersPage: {
     title: 'Enseignants',
